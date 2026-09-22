@@ -15,12 +15,5 @@ module.exports = {
       script: "dist/index.js",
       env: { NODE_ENV: "production" },
     },
-    {
-      name: "web",
-      cwd: "./apps/web",
-      script: "npm",
-      args: "run start -- -p 3000",
-      env: { NODE_ENV: "production" },
-    },
   ],
 };
