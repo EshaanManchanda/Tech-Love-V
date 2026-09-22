@@ -73,7 +73,18 @@ Then set `STRIPE_PRICE_PRO_MONTHLY` / `STRIPE_PRICE_PRO_YEARLY` in `apps/api/.en
 webhook at `POST /api/webhooks/stripe` for `checkout.session.completed`, `invoice.paid`,
 `customer.subscription.deleted`.
 
+## Production
+
+- **Web** (`apps/web`): Vercel, `https://techlovev.myimage.fun`
+- **API** + **worker** (`apps/api`, `apps/worker`): Hostinger VPS via PM2 + Nginx,
+  `https://tlvapi.myimage.fun`
+- DNS for `myimage.fun` is managed in **Cloudflare** (not Hostinger's DNS Zone Editor, despite
+  the VPS being on Hostinger) — see [`DEPLOY-HOSTINGER.md`](DEPLOY-HOSTINGER.md) for the full
+  runbook and a Cloudflare proxy gotcha that breaks both Vercel and Certbot if missed.
+
 ## More docs
 
 - [`docs/API.md`](docs/API.md) — endpoint reference, auth model, the plugin contract
 - [`docs/OPERATIONS.md`](docs/OPERATIONS.md) — backups, required env vars, deferred security items
+- [`DEPLOY-HOSTINGER.md`](DEPLOY-HOSTINGER.md) — production deploy runbook (API + worker on
+  Hostinger, web on Vercel)

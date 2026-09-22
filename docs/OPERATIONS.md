@@ -1,16 +1,29 @@
 # Operations
 
+## Production topology
+
+- **Web**: Vercel (`https://techlovev.myimage.fun`) — separate deploy target from the VPS.
+- **API + worker**: Hostinger VPS, PM2 (`ecosystem.config.js` runs only `api` and `worker` —
+  `web` was removed once the frontend moved to Vercel), Nginx reverse-proxying
+  `https://tlvapi.myimage.fun` → `127.0.0.1:4000`.
+- **DNS**: `myimage.fun`'s nameservers are Cloudflare's, *not* Hostinger's — Hostinger's own DNS
+  Zone Editor has no effect even though the VPS is hosted there. Manage records in the
+  Cloudflare dashboard instead.
+  - **Both `tlvapi` and `techlovev` records must be DNS-only (grey cloud), not proxied
+    (orange cloud).** A proxied `techlovev` breaks Vercel's edge routing (shows as "Proxy
+    Detected" in the Vercel dashboard). A proxied `tlvapi` still lets Certbot issue a cert
+    (Let's Encrypt validates externally) but is unnecessary indirection for a plain API origin.
+- **MongoDB**: Atlas — the VPS's outbound IP must be in Atlas's Network Access allowlist, or
+  every request fails with `MongooseServerSelectionError` / `ReplicaSetNoPrimary` (api stays
+  "online" in `pm2 status` but 502s at Nginx since it can't actually serve requests).
+- **Redis**: Redis Cloud. Set the database's eviction policy to `noeviction` — BullMQ logs
+  `IMPORTANT! Eviction policy is volatile-lru. It should be "noeviction"` on every connection
+  otherwise (not fatal, but job data can silently drop under memory pressure with the default).
+
 ## Database backups
 
-No backup automation is set up in this repo (MongoDB runs in a plain Docker container in dev,
-with no managed-service equivalent configured yet for production). Before going live:
-
-- Point `MONGODB_URI` at **MongoDB Atlas** (or an equivalent managed service) rather than a
-  self-hosted container — Atlas' continuous backup / point-in-time restore covers this without
-  custom scripting.
-- If self-hosting instead, run `mongodump` on a schedule and retain: 7 daily, 4 weekly,
-  12 monthly snapshots, stored off the database host. Test a restore periodically — an
-  untested backup is not a backup.
+- MongoDB Atlas' continuous backup / point-in-time restore covers this without custom
+  scripting — already the production `MONGODB_URI` target, nothing further to configure.
 - `Redis` (BullMQ queues) does not need durable backups — jobs are transient (emails,
   reminders); losing the queue at worst delays a notification, it never loses billing/license
   state, which lives entirely in Mongo.
