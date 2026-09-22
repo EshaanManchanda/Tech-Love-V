@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* shadcn/ui theme tokens — light only for now, matches the rest of the site (no dark mode toggle yet) */
+@layer base {
+  :root {
+    --background: 40 20% 98%; /* warm off-white, not stark white — quieter than pure #fff */
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --primary: 243 75% 59%; /* indigo-600, matches the public site's brand-600 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 10% 95%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 240 10% 95%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 240 10% 95%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 14% 90%;
+    --input: 220 14% 90%;
+    --ring: 243 75% 59%;
+    --radius: 0.5rem;
+    /* Muted gold "seal" accent — the one certificate/license-flavored color note,
+       used sparingly (verified/active states), not a second primary color. */
+    --seal: 38 42% 45%;
+    --seal-foreground: 0 0% 100%;
+  }
+}
+
+body {
+  @apply bg-background text-slate-900;
+}

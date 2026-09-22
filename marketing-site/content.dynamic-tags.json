@@ -1,0 +1,119 @@
+{
+  "meta": {
+    "purpose": "Content source for the public marketing page: features, why-choose-us, and category comparison for Dynamic Tags.",
+    "plugin_version": "4.0",
+    "last_updated": "2026-09-21"
+  },
+  "product_name": "Dynamic Tags",
+  "time_saved": {
+    "stat": "Hours per page",
+    "label": "saved on every WooCommerce, ACF, or membership site you build",
+    "detail": "Without it, showing a product's price, a member's custom field, or a filtered list of posts inside a page builder means custom PHP snippets or a paid add-on per data source. One merge-tag syntax reaches WooCommerce, ACF, user/term meta, queries, and external APIs — so a placeholder that used to take a support ticket and a code edit now takes one line."
+  },
+  "hero": {
+    "headline": "One merge tag for every piece of data on your site",
+    "subheadline": "Drop {wc:price}, {acf:field}, or a live query straight into Elementor, Gutenberg, or Divi — no custom PHP, no per-integration add-on, no waiting on a developer.",
+    "primary_cta": "Get Dynamic Tags",
+    "secondary_cta": "See it in action",
+    "screenshot_ref": "dt-hero-dashboard.png"
+  },
+  "features": [
+    {
+      "id": "core-tags",
+      "title": "Complete merge-tag engine, free forever",
+      "pitch": "Post, taxonomy, author, site, URL, and date placeholders work everywhere — no paid tier required to start.",
+      "detail": "Formatters like |upper, |currency, and |date, plus fallback syntax ({token??default}) and built-in conditionals (user_logged_in, is_mobile, user_role:), are all on the Free plan.",
+      "screenshot_ref": "dt-core-tags.png"
+    },
+    {
+      "id": "woocommerce",
+      "title": "WooCommerce fields without a snippet",
+      "pitch": "{wc:price}, {wc:sku}, {wc:stock_status}, {wc:categories} — drop them into any builder, on any template.",
+      "detail": "No custom loop, no theme-file edit — the same tag syntax you already use for post fields reaches straight into WooCommerce product data.",
+      "screenshot_ref": "dt-woocommerce.png"
+    },
+    {
+      "id": "acf",
+      "title": "ACF repeaters, galleries, and relationships",
+      "pitch": "Scalar ACF fields are free forever; repeater/gallery/relationship fields unlock the array layer.",
+      "detail": "{acf:field.subfield} walks into repeater and relationship structures directly in a merge tag — no PHP loop written by hand.",
+      "screenshot_ref": "dt-acf.png"
+    },
+    {
+      "id": "dt-loop",
+      "title": "[dt_loop] — iterate any array-returning source",
+      "pitch": "Render a product grid, a team list, or a repeater field as a real loop, inside any builder.",
+      "detail": "Combine with [dt_template] for per-record rendering — product cards, team grids, testimonial rows — without a dedicated loop widget or a second plugin.",
+      "screenshot_ref": "dt-loop.png"
+    },
+    {
+      "id": "conditionals",
+      "title": "Field-based conditionals and block visibility",
+      "pitch": "Show or hide entire sections based on real data, not just built-in flags.",
+      "detail": "{if:wc:price>50}, contains, and other field comparisons drive [dt_if]/[dt_else] block-level visibility — merchandising and personalization without a rules-engine plugin.",
+      "screenshot_ref": "dt-conditionals.png"
+    },
+    {
+      "id": "query-api",
+      "title": "{query:...} and {api:...} as data sources",
+      "pitch": "Pull in a filtered set of posts, or a live external JSON feed, as just another merge tag.",
+      "detail": "Query posts as a reusable data source for [dt_loop], or reach an external API and format the response the same way — no custom fetch code, no companion plugin.",
+      "screenshot_ref": "dt-query-api.png"
+    },
+    {
+      "id": "conflict-tools",
+      "title": "Conflict detection, import/export, migration — free forever",
+      "pitch": "Ops tooling never sits behind a paywall, on any plan.",
+      "detail": "Conflict detection between tag names/shortcodes, JSON/CSV/XML/SQL import-export, and dual-storage migration tooling ship free, so moving or auditing tags never costs extra.",
+      "screenshot_ref": "dt-conflict-tools.png"
+    },
+    {
+      "id": "builder-agnostic",
+      "title": "Works in any builder, always",
+      "pitch": "Elementor, Gutenberg, Divi, or a plain widget — the same tags work everywhere, on every plan.",
+      "detail": "No builder-specific integration to install or configure. If it accepts text, it accepts a Dynamic Tags placeholder.",
+      "screenshot_ref": "dt-builder-agnostic.png"
+    }
+  ],
+  "why_choose_us": [
+    {
+      "title": "Free is a complete plugin, not a trial",
+      "detail": "Up to 15 dynamic tags, every core placeholder, every formatter, and all ops tooling (conflict detection, import/export, migration) work fully on Free — nothing here is crippled to force an upgrade."
+    },
+    {
+      "title": "One syntax reaches every data source",
+      "detail": "WooCommerce, ACF, user/term meta, queries, and external APIs all resolve through the same {tag} syntax — no separate integration to learn per data source."
+    },
+    {
+      "title": "Nothing runs outside your site",
+      "detail": "Tag resolution happens on your own WordPress install. {api:...} is the only placeholder that reaches outside your server, and only when you point it at one."
+    },
+    {
+      "title": "Non-destructive by design",
+      "detail": "The 15-tag Free cap is checked only when you create a new tag — downgrading from Paid never disables or deletes a tag you already built."
+    },
+    {
+      "title": "Transparent, low-friction pricing",
+      "detail": "$2/month or $19/year unlocks the entire dynamic-data layer — one site, one price, no quote-only enterprise tier to negotiate."
+    }
+  ],
+  "comparison": {
+    "note": "Dynamic Tags vs. typical WordPress dynamic-content plugins (category comparison, not a specific named competitor).",
+    "columns": ["Capability", "Dynamic Tags", "Typical dynamic-content plugins"],
+    "rows": [
+      ["Free plan tag limit", "Up to 15, fully functional", "Often 3-5, or core features gated"],
+      ["WooCommerce fields", "Included on Paid, $2/mo", "Frequently a separate paid add-on"],
+      ["ACF repeater/relationship support", "Included on Paid", "Often requires a second ACF-specific plugin"],
+      ["Field-based conditionals / block visibility", "Included on Paid", "Usually a separate rules-engine plugin"],
+      ["External API data source", "Included on Paid ({api:...})", "Rare — usually needs custom code"],
+      ["Conflict detection & import/export", "Free forever, every plan", "Often missing or paid-only"],
+      ["Builder compatibility", "Elementor, Gutenberg, Divi, any widget", "Sometimes locked to one builder"],
+      ["Site count per license", "1 site, simple pricing", "Often tiered by site count with steep upgrades"],
+      ["Pricing model", "$2/mo or $19/yr flat", "Often $29-199/yr, tiered by feature count"]
+    ]
+  },
+  "plans_summary": [
+    { "name": "Free", "price": "$0", "highlight": "Up to 15 dynamic tags, every core placeholder and formatter, all ops tooling included", "cta_label": "Get started free", "cta_type": "register" },
+    { "name": "Paid", "price": "$2/mo", "highlight": "Unlimited tags, WooCommerce/ACF arrays, [dt_loop], field conditionals, query/API sources", "cta_label": "Subscribe", "cta_type": "checkout", "highlighted": true }
+  ]
+}
