@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireAuth } from "../middleware/auth.js";
 import { User } from "../models/User.js";
 import {
+  cookieDomain,
   hashPassword,
   signAccessToken,
   signRefreshToken,
@@ -24,7 +25,7 @@ authRouter.get("/me", requireAuth, async (req, res) => {
 const isProd = process.env.NODE_ENV === "production";
 
 function setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
-  const base = { httpOnly: true, sameSite: "lax" as const, secure: isProd, path: "/" };
+  const base = { httpOnly: true, sameSite: "lax" as const, secure: isProd, path: "/", domain: cookieDomain };
   res.cookie("access_token", accessToken, { ...base, maxAge: 15 * 60 * 1000 });
   res.cookie("refresh_token", refreshToken, { ...base, maxAge: 7 * 24 * 60 * 60 * 1000 });
 }
@@ -106,7 +107,7 @@ authRouter.post("/refresh", async (req, res) => {
 });
 
 authRouter.post("/logout", (_req, res) => {
-  res.clearCookie("access_token", { path: "/" });
-  res.clearCookie("refresh_token", { path: "/" });
+  res.clearCookie("access_token", { path: "/", domain: cookieDomain });
+  res.clearCookie("refresh_token", { path: "/", domain: cookieDomain });
   res.status(204).end();
 });

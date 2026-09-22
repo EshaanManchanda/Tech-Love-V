@@ -13,7 +13,7 @@ import { Subscription } from "../models/Subscription.js";
 import { User } from "../models/User.js";
 import { enqueueEmail } from "../queues/emailQueue.js";
 import { audit } from "../services/auditService.js";
-import { hashPassword, signImpersonationToken, signSetPasswordToken } from "../services/authService.js";
+import { cookieDomain, hashPassword, signImpersonationToken, signSetPasswordToken } from "../services/authService.js";
 import { generateLicenseKey, todayIsoDate } from "../services/licenseService.js";
 import { createPersonalOrganization, findPrimaryOrganization } from "../services/organizationService.js";
 import { stripe } from "../services/stripeClient.js";
@@ -181,8 +181,8 @@ adminRouter.post("/users/:id/impersonate", async (req, res) => {
   if (!target) return res.status(404).json({ error: { code: "NOT_FOUND", message: "User not found." } });
 
   const token = signImpersonationToken({ sub: target._id.toString(), role: target.role, impersonated_by: req.user!.id });
-  res.cookie("access_token", token, { httpOnly: true, sameSite: "lax", secure: isProd, path: "/", maxAge: 5 * 60 * 1000 });
-  res.clearCookie("refresh_token", { path: "/" }); // no refresh — the impersonation session must expire on its own
+  res.cookie("access_token", token, { httpOnly: true, sameSite: "lax", secure: isProd, path: "/", domain: cookieDomain, maxAge: 5 * 60 * 1000 });
+  res.clearCookie("refresh_token", { path: "/", domain: cookieDomain }); // no refresh — the impersonation session must expire on its own
 
   await audit({
     actorId: req.user!.id,
