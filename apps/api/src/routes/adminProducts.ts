@@ -191,7 +191,9 @@ adminProductsRouter.patch("/:id/plans/:planId/status", async (req, res) => {
 adminProductsRouter.get("/:id/versions", async (req, res) => {
   const product = await Product.findById(req.params.id).lean();
   if (!product) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Product not found." } });
-  res.json([...product.versions].sort((a, b) => new Date(b.released_at).getTime() - new Date(a.released_at).getTime()));
+  // .lean() skips Mongoose's schema-default hydration, so a product saved before the
+  // `versions` field existed comes back with it simply missing, not defaulted to [].
+  res.json([...(product.versions ?? [])].sort((a, b) => new Date(b.released_at).getTime() - new Date(a.released_at).getTime()));
 });
 
 adminProductsRouter.post("/:id/versions", uploadZip, async (req, res) => {

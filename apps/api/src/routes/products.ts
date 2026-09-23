@@ -4,14 +4,23 @@ import { Product } from "../models/Product.js";
 
 export const productsRouter = Router();
 
-function publicShape(product: { _id: unknown; name: string; slug: string; description?: string; tagline?: string; versions: { version: string; is_current: boolean }[] }) {
+function publicShape(product: {
+  _id: unknown;
+  name: string;
+  slug: string;
+  description?: string;
+  tagline?: string;
+  versions?: { version: string; is_current: boolean }[];
+}) {
   return {
     _id: product._id,
     name: product.name,
     slug: product.slug,
     description: product.description,
     tagline: product.tagline,
-    current_version: product.versions.find((v) => v.is_current)?.version ?? null,
+    // .lean() skips schema-default hydration — a product saved before `versions`
+    // existed has the field missing entirely, not defaulted to [].
+    current_version: product.versions?.find((v) => v.is_current)?.version ?? null,
   };
 }
 

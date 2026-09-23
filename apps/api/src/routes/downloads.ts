@@ -10,7 +10,9 @@ function resolveSlug(req: { query: { product?: unknown } }): string {
 
 async function currentVersion(slug: string) {
   const product = await Product.findOne({ slug }).lean();
-  return product?.versions.find((v) => v.is_current);
+  // .lean() skips schema-default hydration — a product saved before `versions`
+  // existed has the field missing entirely, not defaulted to [].
+  return product?.versions?.find((v) => v.is_current);
 }
 
 // Available to every logged-in user regardless of plan — Free tier needs the

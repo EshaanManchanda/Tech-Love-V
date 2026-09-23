@@ -1,6 +1,7 @@
 import request from "supertest";
 import { beforeAll, describe, expect, it } from "vitest";
 import { createApp } from "../app.js";
+import { Product } from "../models/Product.js";
 import { User } from "../models/User.js";
 
 const app = createApp();
@@ -88,5 +89,22 @@ describe("GET /api/products (public)", () => {
 
     const list = await request(app).get("/api/products");
     expect(list.body.some((p: { _id: string }) => p._id === product.body._id)).toBe(false);
+  });
+
+  // Regression: a product saved before the `versions` field existed on the schema
+  // comes back from a .lean() read with that field simply absent, not defaulted to
+  // [] (only full document hydration applies schema defaults) — every route reading
+  // `.versions` off a lean product must tolerate that, or this 500s instead of 200ing.
+  it("doesn't 500 on a legacy product document with no versions field stored", async () => {
+    const slug = `legacy-${Date.now()}`;
+    await Product.collection.insertOne({ name: "Legacy Product", slug, status: "active", created_at: new Date() });
+
+    const list = await request(app).get("/api/products");
+    expect(list.status).toBe(200);
+    expect(list.body.find((p: { slug: string }) => p.slug === slug)?.current_version).toBeNull();
+
+    const detail = await request(app).get(`/api/products/${slug}`);
+    expect(detail.status).toBe(200);
+    expect(detail.body.current_version).toBeNull();
   });
 });
