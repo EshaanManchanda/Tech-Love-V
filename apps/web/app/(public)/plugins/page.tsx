@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
+import { API_URL } from "@/lib/api";
 import { PLUGIN_CATALOG, type PluginCatalogEntry } from "@/lib/plugin-catalog";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 export const metadata: Metadata = {
   title: "All Plugins — Tech Love V",

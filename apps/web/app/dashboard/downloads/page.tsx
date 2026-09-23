@@ -2,11 +2,9 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Download } from "lucide-react";
-import { api } from "@/lib/api";
+import { API_URL, api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 interface PluginInfo {
   version: string;

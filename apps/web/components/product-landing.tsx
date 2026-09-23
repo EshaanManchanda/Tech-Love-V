@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CONTACT_URL } from "@/lib/plans";
+import { ProductPrimaryCta } from "@/components/product-primary-cta";
 
 export interface ProductContent {
   product_name: string;
@@ -63,7 +64,17 @@ function planHref(plan: ProductContent["plans_summary"][number], pricingHref: st
   return pricingHref;
 }
 
-export function ProductLanding({ content, pricingHref }: { content: ProductContent; pricingHref: string }) {
+export function ProductLanding({
+  content,
+  pricingHref,
+  productSlug,
+  currentVersion,
+}: {
+  content: ProductContent;
+  pricingHref: string;
+  productSlug: string;
+  currentVersion?: string | null;
+}) {
   return (
     <>
       {/* 1. Hero */}
@@ -72,10 +83,13 @@ export function ProductLanding({ content, pricingHref }: { content: ProductConte
           <div className="text-center sm:text-left">
             <h1 className="font-display text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">{content.hero.headline}</h1>
             <p className="mx-auto mt-4 max-w-xl text-lg text-slate-600 sm:mx-0">{content.hero.subheadline}</p>
+            {currentVersion && <p className="mt-2 text-sm text-slate-400">Current version {currentVersion}</p>}
             <div className="mt-8 flex justify-center gap-4 sm:justify-start">
-              <Link href="/register" className="rounded-md bg-brand-600 px-6 py-3 text-sm font-medium text-white shadow-lg shadow-brand-200 hover:bg-brand-700">
-                {content.hero.primary_cta}
-              </Link>
+              <ProductPrimaryCta
+                productSlug={productSlug}
+                registerLabel={content.hero.primary_cta}
+                className="rounded-md bg-brand-600 px-6 py-3 text-sm font-medium text-white shadow-lg shadow-brand-200 hover:bg-brand-700"
+              />
               <a href="#features" className="rounded-md bg-white px-6 py-3 text-sm font-medium text-slate-900 ring-1 ring-slate-200 hover:bg-slate-100">
                 {content.hero.secondary_cta}
               </a>
@@ -220,9 +234,11 @@ export function ProductLanding({ content, pricingHref }: { content: ProductConte
           <h2 className="font-display text-2xl font-bold text-white">{content.hero.primary_cta}</h2>
           <p className="mt-2 text-brand-100">Free forever tier, no card required to start.</p>
           <div className="mt-6 flex justify-center gap-4">
-            <Link href="/register" className="inline-block rounded-md bg-white px-6 py-3 text-sm font-medium text-brand-700 hover:bg-brand-50">
-              {content.hero.primary_cta}
-            </Link>
+            <ProductPrimaryCta
+              productSlug={productSlug}
+              registerLabel={content.hero.primary_cta}
+              className="inline-block rounded-md bg-white px-6 py-3 text-sm font-medium text-brand-700 hover:bg-brand-50"
+            />
             <Link href="/docs" className="inline-block rounded-md bg-brand-700/40 px-6 py-3 text-sm font-medium text-white ring-1 ring-white/40 hover:bg-brand-700/60">
               Read documentation
             </Link>

@@ -6,3 +6,6 @@ dist/
 build/
 .next/
 *.log
+
+# Uploaded plugin zips (admin Products CMS) — runtime data, not source; never tracked
+apps/api/public/downloads/

@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
+import { ProductPrimaryCta } from "@/components/product-primary-cta";
+import { API_URL } from "@/lib/api";
 import { CONTACT_URL } from "@/lib/plans";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 interface PublicPlan {
   _id: string;
@@ -63,12 +62,13 @@ export default async function DynamicProductPage({ params }: { params: { slug: s
         <h1 className="font-display text-4xl font-bold text-slate-900">{product.name}</h1>
         {product.tagline && <p className="mx-auto mt-4 max-w-xl text-lg text-slate-600">{product.tagline}</p>}
         {product.current_version && <p className="mt-2 text-sm text-slate-400">Current version {product.current_version}</p>}
-        <Link
-          href="/register"
-          className="mt-8 inline-block rounded-md bg-brand-600 px-6 py-3 text-sm font-medium text-white shadow-lg shadow-brand-200 hover:bg-brand-700"
-        >
-          Get started
-        </Link>
+        <div className="mt-8">
+          <ProductPrimaryCta
+            productSlug={product.slug}
+            registerLabel="Get started"
+            className="inline-block rounded-md bg-brand-600 px-6 py-3 text-sm font-medium text-white shadow-lg shadow-brand-200 hover:bg-brand-700"
+          />
+        </div>
       </div>
 
       {product.description && <p className="mx-auto mt-12 max-w-2xl text-center text-slate-600">{product.description}</p>}
