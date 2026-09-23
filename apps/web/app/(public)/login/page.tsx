@@ -60,6 +60,9 @@ function LoginForm() {
             <div>
               <Input type="password" placeholder="Password" {...register("password")} />
               <ErrorText>{errors.password?.message}</ErrorText>
+              <a href="/forgot-password" className="mt-1 inline-block text-xs text-neutral-500 underline">
+                Forgot password?
+              </a>
             </div>
             <ErrorText>{formError}</ErrorText>
             <Button type="submit" disabled={isSubmitting} className="w-full">

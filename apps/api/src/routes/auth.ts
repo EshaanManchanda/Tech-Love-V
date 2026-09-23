@@ -7,6 +7,7 @@ import {
   hashPassword,
   signAccessToken,
   signRefreshToken,
+  signSetPasswordToken,
   verifyPassword,
   verifyRefreshToken,
   verifySetPasswordToken,
@@ -58,6 +59,9 @@ authRouter.post("/login", async (req, res) => {
   if (!user || !(await verifyPassword(parsed.data.password, user.password_hash))) {
     return res.status(401).json({ error: { code: "INVALID_CREDENTIALS", message: "Invalid email or password." } });
   }
+  if (user.status === "disabled") {
+    return res.status(403).json({ error: { code: "ACCOUNT_DISABLED", message: "This account has been deactivated." } });
+  }
 
   const accessToken = signAccessToken({ sub: user._id.toString(), role: user.role });
   const refreshToken = signRefreshToken(user._id.toString());
@@ -86,6 +90,22 @@ authRouter.post("/set-password", async (req, res) => {
   const refreshToken = signRefreshToken(user._id.toString());
   setAuthCookies(res, accessToken, refreshToken);
   res.json({ _id: user._id, name: user.name, email: user.email, role: user.role });
+});
+
+authRouter.post("/forgot-password", async (req, res) => {
+  const parsed = z.object({ email: z.string().email() }).safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: { code: "INVALID_INPUT", message: "A valid email is required." } });
+
+  const user = await User.findOne({ email: parsed.data.email });
+  // Always the same response whether or not the account exists / is disabled —
+  // a differing response here would let an attacker enumerate registered emails.
+  if (user && user.status !== "disabled") {
+    enqueueEmail("password-reset", user.email, {
+      name: user.name,
+      resetUrl: `${process.env.APP_URL ?? "http://localhost:3000"}/set-password?token=${signSetPasswordToken(user._id.toString(), "1h")}`,
+    });
+  }
+  res.json({ message: "If an account exists for that email, a reset link has been sent." });
 });
 
 authRouter.post("/refresh", async (req, res) => {

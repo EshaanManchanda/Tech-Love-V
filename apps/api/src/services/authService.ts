@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
+import jwt, { type SignOptions } from "jsonwebtoken";
 
 // Unset in dev (host-only cookie is fine on localhost). In production, set to
 // the parent domain (e.g. ".myimage.fun") so auth cookies set by the API
@@ -61,9 +61,14 @@ export function verifyRefreshToken(token: string): { sub: string } {
   return jwt.verify(token, refreshSecret()) as { sub: string };
 }
 
-/** Issued to a newly-invited (admin-created) customer so they can set their own password. */
-export function signSetPasswordToken(userId: string): string {
-  return jwt.sign({ sub: userId, purpose: "set_password" }, accessSecret(), { expiresIn: "7d" });
+/**
+ * Issued to a newly-invited (admin-created) customer so they can set their own
+ * password — also reused for self-service forgot-password with a shorter
+ * expiry (see routes/auth.ts's /forgot-password), since both are "prove you
+ * own this account, then set a new password" and need no separate token model.
+ */
+export function signSetPasswordToken(userId: string, expiresIn: NonNullable<SignOptions["expiresIn"]> = "7d"): string {
+  return jwt.sign({ sub: userId, purpose: "set_password" }, accessSecret(), { expiresIn });
 }
 
 export function verifySetPasswordToken(token: string): { sub: string } {

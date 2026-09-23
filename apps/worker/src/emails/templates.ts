@@ -1,4 +1,4 @@
-export type EmailTemplateType = "welcome" | "invite" | "license-created" | "license-expiring" | "support-reply";
+export type EmailTemplateType = "welcome" | "invite" | "account-created" | "password-reset" | "license-created" | "license-expiring" | "support-reply";
 
 export function renderTemplate(type: EmailTemplateType, data: Record<string, unknown>): { subject: string; html: string } {
   switch (type) {
@@ -12,6 +12,18 @@ export function renderTemplate(type: EmailTemplateType, data: Record<string, unk
       return {
         subject: "You've been issued a Certificate Generator license",
         html: `<p>Hi ${data.name},</p><p>An admin created an account for you with a <strong>${data.plan}</strong> license:</p><p><code>${data.licenseKey}</code></p><p>Set your password to finish setting up your account:</p><p><a href="${data.setPasswordUrl}">${data.setPasswordUrl}</a></p><p>This link expires in 7 days.</p>`,
+      };
+
+    case "account-created":
+      return {
+        subject: "Your account is ready",
+        html: `<p>Hi ${data.name},</p><p>An admin created an account for you. Set your password to log in:</p><p><a href="${data.setPasswordUrl}">${data.setPasswordUrl}</a></p><p>This link expires in 7 days.</p>`,
+      };
+
+    case "password-reset":
+      return {
+        subject: "Reset your password",
+        html: `<p>Hi ${data.name},</p><p>Someone requested a password reset for your account. Click below to choose a new password:</p><p><a href="${data.resetUrl}">${data.resetUrl}</a></p><p>This link expires in 1 hour. If you didn't request this, you can ignore this email.</p>`,
       };
 
     case "license-created":

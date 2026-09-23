@@ -21,3 +21,15 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   if (res.status === 204) return undefined as T;
   return res.json();
 }
+
+// Separate from api() because a multipart body must NOT get a manual
+// Content-Type — fetch has to set it itself (with the multipart boundary).
+export async function apiUpload<T>(path: string, formData: FormData): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, { method: "POST", credentials: "include", body: formData });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(res.status, body?.error?.message ?? "Request failed");
+  }
+  return res.json();
+}

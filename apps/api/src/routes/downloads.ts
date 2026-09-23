@@ -1,24 +1,30 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth.js";
-import { PLUGIN_FILES } from "../config/plugin.js";
-import type { ProductSlug } from "../config/plans.js";
+import { Product } from "../models/Product.js";
 
 export const downloadsRouter = Router();
 
-function resolveProduct(req: { query: { product?: unknown } }): ProductSlug {
+function resolveSlug(req: { query: { product?: unknown } }): string {
   return req.query.product === "dynamic-tags" ? "dynamic-tags" : "certificate-generator";
+}
+
+async function currentVersion(slug: string) {
+  const product = await Product.findOne({ slug }).lean();
+  return product?.versions.find((v) => v.is_current);
 }
 
 // Available to every logged-in user regardless of plan — Free tier needs the
 // plugin too, since only *activation* (not installation) is plan-gated.
-downloadsRouter.get("/plugin/info", requireAuth, (req, res) => {
-  const { version, filename } = PLUGIN_FILES[resolveProduct(req)];
-  res.json({ version, filename });
+downloadsRouter.get("/plugin/info", requireAuth, async (req, res) => {
+  const version = await currentVersion(resolveSlug(req));
+  if (!version) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Plugin package not available." } });
+  res.json({ version: version.version, filename: version.zip_filename });
 });
 
-downloadsRouter.get("/plugin", requireAuth, (req, res) => {
-  const { zipPath, filename } = PLUGIN_FILES[resolveProduct(req)];
-  res.download(zipPath, filename, (err) => {
+downloadsRouter.get("/plugin", requireAuth, async (req, res) => {
+  const version = await currentVersion(resolveSlug(req));
+  if (!version) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Plugin package not available." } });
+  res.download(version.zip_path, version.zip_filename, (err) => {
     if (err && !res.headersSent) {
       res.status(404).json({ error: { code: "NOT_FOUND", message: "Plugin package not available." } });
     }

@@ -17,7 +17,7 @@ connection.on("error", () => {}); // swallow — enqueueEmail()'s .catch() alrea
 
 export const emailQueue = new Queue("email", { connection });
 
-export type EmailTemplateType = "welcome" | "invite" | "license-created" | "license-expiring" | "support-reply";
+export type EmailTemplateType = "welcome" | "invite" | "account-created" | "password-reset" | "license-created" | "license-expiring" | "support-reply";
 
 /**
  * Fire-and-forget: never let a Redis/worker outage block or fail the caller

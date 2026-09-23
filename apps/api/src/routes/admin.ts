@@ -21,9 +21,125 @@ import { stripe } from "../services/stripeClient.js";
 export const adminRouter = Router();
 adminRouter.use(requireAuth, requireAdmin);
 
-adminRouter.get("/customers", async (_req, res) => {
-  const customers = await User.find({ role: "customer" }).select("-password_hash").lean();
+adminRouter.get("/customers", async (req, res) => {
+  const filter: Record<string, unknown> = { role: "customer" };
+  if (req.query.status === "active" || req.query.status === "disabled") filter.status = req.query.status;
+  if (typeof req.query.q === "string" && req.query.q.trim()) {
+    const q = req.query.q.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    filter.$or = [{ name: { $regex: q, $options: "i" } }, { email: { $regex: q, $options: "i" } }];
+  }
+  const customers = await User.find(filter).select("-password_hash").lean();
   res.json(customers);
+});
+
+const passwordModeSchema = z
+  .object({
+    mode: z.enum(["email_link", "set_password"]).default("email_link"),
+    password: z.string().min(8).optional(),
+  })
+  .refine((d) => d.mode !== "set_password" || !!d.password, { message: "password (min 8 chars) is required when mode is set_password" });
+
+const createCustomerSchema = z.object({ name: z.string().min(1), email: z.string().email() }).and(passwordModeSchema);
+
+adminRouter.post("/customers", async (req, res) => {
+  const parsed = createCustomerSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: { code: "INVALID_INPUT", message: parsed.error.issues[0].message } });
+  const { name, email, mode, password } = parsed.data;
+
+  if (await User.findOne({ email })) {
+    return res.status(409).json({ error: { code: "EMAIL_TAKEN", message: "An account with that email already exists." } });
+  }
+
+  const passwordHash = await hashPassword(mode === "set_password" ? password! : randomBytes(24).toString("hex"));
+  const user = await User.create({ name, email, password_hash: passwordHash, role: "customer" });
+  await createPersonalOrganization(user._id, user.name);
+
+  if (mode === "email_link") {
+    enqueueEmail("account-created", user.email, {
+      name: user.name,
+      setPasswordUrl: `${process.env.APP_URL ?? "http://localhost:3000"}/set-password?token=${signSetPasswordToken(user._id.toString())}`,
+    });
+  }
+
+  await audit({ actorId: req.user!.id, action: "customer.create", resource: "User", resourceId: user._id.toString(), after: { name, email, mode }, ip: req.ip });
+  res.status(201).json({ _id: user._id, name: user.name, email: user.email, status: user.status, created_at: user.created_at });
+});
+
+const updateCustomerSchema = z
+  .object({ name: z.string().min(1).optional(), email: z.string().email().optional() })
+  .refine((d) => d.name !== undefined || d.email !== undefined, { message: "Provide at least one field to update." });
+
+adminRouter.patch("/customers/:id", async (req, res) => {
+  const parsed = updateCustomerSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: { code: "INVALID_INPUT", message: parsed.error.issues[0].message } });
+
+  const user = await User.findById(req.params.id);
+  if (!user) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Customer not found." } });
+
+  if (parsed.data.email && parsed.data.email !== user.email && (await User.findOne({ email: parsed.data.email }))) {
+    return res.status(409).json({ error: { code: "EMAIL_TAKEN", message: "An account with that email already exists." } });
+  }
+
+  const before = { name: user.name, email: user.email };
+  if (parsed.data.name) user.name = parsed.data.name;
+  if (parsed.data.email) user.email = parsed.data.email;
+  await user.save();
+
+  await audit({
+    actorId: req.user!.id,
+    action: "customer.update",
+    resource: "User",
+    resourceId: user._id.toString(),
+    before,
+    after: { name: user.name, email: user.email },
+    ip: req.ip,
+  });
+  res.json({ _id: user._id, name: user.name, email: user.email, status: user.status, created_at: user.created_at });
+});
+
+adminRouter.post("/customers/:id/deactivate", async (req, res) => {
+  if (req.params.id === req.user!.id) {
+    return res.status(400).json({ error: { code: "INVALID_ACTION", message: "You can't deactivate your own account." } });
+  }
+  const user = await User.findByIdAndUpdate(req.params.id, { status: "disabled" }, { new: true });
+  if (!user) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Customer not found." } });
+  await audit({ actorId: req.user!.id, action: "customer.deactivate", resource: "User", resourceId: user._id.toString(), ip: req.ip });
+  res.json({ _id: user._id, status: user.status });
+});
+
+adminRouter.post("/customers/:id/reactivate", async (req, res) => {
+  const user = await User.findByIdAndUpdate(req.params.id, { status: "active" }, { new: true });
+  if (!user) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Customer not found." } });
+  await audit({ actorId: req.user!.id, action: "customer.reactivate", resource: "User", resourceId: user._id.toString(), ip: req.ip });
+  res.json({ _id: user._id, status: user.status });
+});
+
+adminRouter.post("/customers/:id/reset-password", async (req, res) => {
+  const parsed = passwordModeSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: { code: "INVALID_INPUT", message: parsed.error.issues[0].message } });
+
+  const user = await User.findById(req.params.id);
+  if (!user) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Customer not found." } });
+
+  if (parsed.data.mode === "set_password") {
+    user.password_hash = await hashPassword(parsed.data.password!);
+    await user.save();
+  } else {
+    enqueueEmail("password-reset", user.email, {
+      name: user.name,
+      resetUrl: `${process.env.APP_URL ?? "http://localhost:3000"}/set-password?token=${signSetPasswordToken(user._id.toString(), "1h")}`,
+    });
+  }
+
+  await audit({
+    actorId: req.user!.id,
+    action: "customer.reset_password",
+    resource: "User",
+    resourceId: user._id.toString(),
+    after: { mode: parsed.data.mode },
+    ip: req.ip,
+  });
+  res.json({ message: parsed.data.mode === "set_password" ? "Password updated." : "Reset link sent." });
 });
 
 adminRouter.get("/licenses", async (_req, res) => {

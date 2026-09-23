@@ -1,5 +1,5 @@
 export interface PluginCatalogEntry {
-  slug: "certificate-generator" | "dynamic-tags";
+  slug: string;
   name: string;
   tagline: string;
   startingPrice: string;

@@ -14,6 +14,7 @@ import swaggerUi from "swagger-ui-express";
 import { logger } from "./logger.js";
 import { openApiSpec } from "./openapi.js";
 import { adminRouter } from "./routes/admin.js";
+import { adminProductsRouter } from "./routes/adminProducts.js";
 import { apiKeysRouter } from "./routes/apiKeys.js";
 import { authRouter } from "./routes/auth.js";
 import { billingRouter, checkoutRouter } from "./routes/checkout.js";
@@ -23,6 +24,7 @@ import { notificationsRouter } from "./routes/notifications.js";
 import { organizationsRouter } from "./routes/organizations.js";
 import { plansRouter } from "./routes/plans.js";
 import { pluginLicenseRouter } from "./routes/pluginLicense.js";
+import { productsRouter } from "./routes/products.js";
 import { stripeWebhookRouter } from "./routes/stripeWebhook.js";
 import { subscriptionsRouter } from "./routes/subscriptions.js";
 import { supportRouter } from "./routes/support.js";
@@ -61,12 +63,14 @@ export function createApp() {
 
   const authLimiter = rateLimit({ windowMs: 60_000, limit: 5 });
   app.use("/api/auth/login", authLimiter);
+  app.use("/api/auth/forgot-password", authLimiter);
 
   const licenseLimiter = rateLimit({ windowMs: 60_000, limit: 60 });
   app.use("/api/payments", licenseLimiter, pluginLicenseRouter);
 
   app.use("/api/auth", authRouter);
   app.use("/api/plans", plansRouter);
+  app.use("/api/products", productsRouter);
   app.use("/api/checkout", checkoutRouter);
   app.use("/api/billing", billingRouter);
   app.use("/api/licenses", licensesRouter);
@@ -77,6 +81,7 @@ export function createApp() {
   app.use("/api/notifications", notificationsRouter);
   app.use("/api/support", supportRouter);
   app.use("/api/admin", adminRouter);
+  app.use("/api/admin/products", adminProductsRouter);
 
   // Catches every error forwarded by express-async-errors (or a manual next(err))
   // from any route above — a 500 for the one request, not a crashed process.

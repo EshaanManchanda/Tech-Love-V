@@ -12,6 +12,7 @@ import {
   LifeBuoy,
   LogOut,
   Menu,
+  Package,
   ShieldCheck,
   ScrollText,
   Settings,
@@ -53,6 +54,7 @@ const CUSTOMER_NAV: PortalNavItem[] = [
 const ADMIN_NAV: PortalNavItem[] = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/customers", label: "Customers", icon: Users },
+  { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/licenses", label: "Licenses", icon: KeyRound },
   { href: "/admin/coupons", label: "Coupons", icon: Ticket },
   { href: "/admin/support", label: "Support", icon: LifeBuoy },
