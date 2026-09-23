@@ -10,6 +10,7 @@ import { ProductPrimaryCta } from "@/components/product-primary-cta";
 export interface ProductContent {
   product_name: string;
   time_saved: { stat: string; label: string; detail: string };
+  how_it_works?: { headline: string; steps: { title: string; detail: string; screenshot_ref: string }[] };
   hero: { headline: string; subheadline: string; primary_cta: string; secondary_cta: string; screenshot_ref: string };
   features: { id: string; title: string; pitch: string; detail: string; screenshot_ref: string }[];
   why_choose_us: { title: string; detail: string }[];
@@ -109,6 +110,27 @@ export function ProductLanding({
           </div>
         </div>
       </section>
+
+      {/* 2b. How it works (optional per product) */}
+      {content.how_it_works && (
+        <section className="mx-auto max-w-6xl px-4 pt-20">
+          <h2 className="text-center font-display text-3xl font-bold text-slate-900">{content.how_it_works.headline}</h2>
+          <ol className="mt-12 grid gap-8 sm:grid-cols-2">
+            {content.how_it_works.steps.map((s, i) => (
+              <li key={s.title}>
+                <Screenshot file={s.screenshot_ref} alt={s.title} />
+                <div className="mt-4 flex gap-3">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">{i + 1}</span>
+                  <div>
+                    <h3 className="font-display text-lg font-semibold text-slate-900">{s.title}</h3>
+                    <p className="mt-1 text-sm text-slate-600">{s.detail}</p>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
 
       {/* 3. Feature grid */}
       <section id="features" className="mx-auto max-w-6xl px-4 py-20">
