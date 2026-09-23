@@ -45,7 +45,7 @@ checkoutRouter.post("/session", requireAuth, async (req, res) => {
     providerCouponId,
     metadata: couponId ? { coupon_id: couponId } : undefined,
     successUrl: `${appUrl()}/dashboard?checkout=success`,
-    cancelUrl: `${appUrl()}/pricing?checkout=cancelled`,
+    cancelUrl: `${appUrl()}/${parsed.data.plan === "paid" ? "dynamic-tags" : "certificate-generator"}/pricing?checkout=cancelled`,
   });
 
   res.json({ url });

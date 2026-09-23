@@ -172,7 +172,7 @@ export default function DocsPage() {
 
       <div className="mt-16 rounded-lg bg-gradient-to-r from-indigo-600 via-violet-600 to-rose-500 px-6 py-10 text-center">
         <h2 className="font-display text-xl font-bold text-white">Ready to license Certificate Generator?</h2>
-        <Link href="/pricing" className="mt-4 inline-block rounded-md bg-white px-6 py-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50">
+        <Link href="/certificate-generator/pricing" className="mt-4 inline-block rounded-md bg-white px-6 py-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50">
           View plans
         </Link>
       </div>

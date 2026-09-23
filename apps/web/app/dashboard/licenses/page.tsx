@@ -98,7 +98,7 @@ export default function LicensesPage() {
             title="No license yet"
             description="The Free plan works with no license key. Subscribe to a paid plan to get one."
             action={
-              <a href="/pricing">
+              <a href="/certificate-generator/pricing">
                 <Button size="sm">View plans</Button>
               </a>
             }

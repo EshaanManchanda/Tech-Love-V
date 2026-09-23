@@ -56,7 +56,7 @@ export default function BillingPage() {
             title="You're on the Free plan"
             description="No subscription yet — upgrade for higher limits and premium features."
             action={
-              <a href="/pricing">
+              <a href="/certificate-generator/pricing">
                 <Button size="sm">View paid plans</Button>
               </a>
             }

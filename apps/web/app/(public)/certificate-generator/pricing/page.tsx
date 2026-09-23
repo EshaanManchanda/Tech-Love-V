@@ -55,7 +55,7 @@ export default function PricingPage() {
 
   async function subscribePro() {
     if (!user) {
-      router.push("/login?next=/pricing");
+      router.push("/login?next=/certificate-generator/pricing");
       return;
     }
     setLoading(true);
@@ -98,7 +98,11 @@ export default function PricingPage() {
             <span className="inline-block rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">Free forever</span>
             <h2 className="mt-3 text-lg font-semibold">{free.label}</h2>
             <p className="mt-2 text-3xl font-bold">$0</p>
-            <p className="mt-4 text-sm text-slate-600">{free.certLimit} certificates, {free.bulkCap} bulk import cap.</p>
+            <p className="mt-4 text-sm text-slate-600">No license key needed.</p>
+            <ul className="mt-2 space-y-1 text-sm text-slate-600">
+              <li>{free.certLimit} certificates, reset on the 1st</li>
+              <li>Bulk CSV import/export capped at 250 students, 250 teachers, 250 schools and 6 templates</li>
+            </ul>
             <a href="/register">
               <Button className="mt-6 w-full bg-slate-100 text-slate-900 hover:bg-slate-200">{free.cta.label}</Button>
             </a>

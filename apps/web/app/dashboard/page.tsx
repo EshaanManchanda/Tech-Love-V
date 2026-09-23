@@ -94,7 +94,7 @@ export default function DashboardOverviewPage() {
         <Card>
           <CardContent className="flex items-center justify-between pt-6">
             <p className="text-sm text-muted-foreground">No active license yet — the Free plan works with no license key at all.</p>
-            <Link href="/pricing">
+            <Link href="/certificate-generator/pricing">
               <Button>View plans</Button>
             </Link>
           </CardContent>

@@ -16,22 +16,34 @@ import { Feature } from "../models/Feature.js";
 import { PlanFeature } from "../models/PlanFeature.js";
 
 const FEATURE_MATRIX: { key: string; label: string; free: boolean; pro: boolean; business: boolean; note?: Partial<Record<MarketingPlanSlug, string>> }[] = [
-  { key: "basic_pdf", label: "Basic PDF Generation", free: true, pro: true, business: true },
-  { key: "manual_issue", label: "Manual Certificate Issue", free: true, pro: true, business: true },
-  { key: "search_shortcode", label: "Search Shortcode", free: true, pro: true, business: true },
-  { key: "verification", label: "Certificate Verification / QR", free: true, pro: true, business: true },
-  { key: "analytics", label: "Analytics Dashboard", free: true, pro: true, business: true },
-  { key: "serial_numbers", label: "Serial Number Generation", free: true, pro: true, business: true },
-  { key: "bulk_import", label: "CSV Bulk Import/Export", free: true, pro: true, business: true, note: { free: "Capped" } },
-  { key: "bulk_zip", label: "Bulk ZIP Download", free: false, pro: true, business: true },
-  { key: "email_templates", label: "Email Templates", free: false, pro: true, business: true },
-  { key: "api_access", label: "REST API Access", free: false, pro: true, business: true },
-  { key: "smtp_tools", label: "SMTP Diagnostics", free: false, pro: true, business: true },
-  { key: "priority_support", label: "Priority Support", free: false, pro: true, business: true },
-  { key: "full_font_library", label: "19,000+ Font Library", free: false, pro: false, business: true },
-  { key: "unlimited_api", label: "Unlimited API Calls", free: false, pro: false, business: true },
-  { key: "multisite", label: "Multisite Support", free: false, pro: false, business: true },
-  { key: "remove_branding", label: "Remove Plugin Branding", free: true, pro: true, business: true },
+  // Certificates
+  { key: "basic_pdf", label: "PDF certificate generation", free: true, pro: true, business: true },
+  { key: "manual_issue", label: "Manual certificate issuing", free: true, pro: true, business: true },
+  { key: "lms_integrations", label: "Tutor LMS, LearnDash, LifterLMS, Sensei LMS and WooCommerce", free: true, pro: true, business: true },
+  { key: "track_certificates", label: 'Multi-course "track" certificates', free: true, pro: true, business: true },
+  // Verification and public pages
+  { key: "verification", label: "QR code verification ([cg_verify_certificate])", free: true, pro: true, business: true },
+  { key: "revocation", label: "Certificate revocation (shown as revoked on verify)", free: true, pro: true, business: true },
+  { key: "linkedin", label: 'LinkedIn "Add to Profile" button', free: true, pro: true, business: true },
+  { key: "search_shortcode", label: "Search shortcodes ([student_search], [teacher_search], [school_search])", free: true, pro: true, business: true },
+  // Admin tools
+  { key: "analytics", label: "Certificate analytics dashboard", free: true, pro: true, business: true },
+  { key: "getting_started", label: "Getting Started checklist", free: true, pro: true, business: true },
+  { key: "admin_bulk_actions", label: "Bulk edit, bulk email and event filtering on admin lists", free: true, pro: true, business: true },
+  { key: "bulk_send_filters", label: "Bulk Send filters (event, import source) + recipient preflight", free: true, pro: true, business: true },
+  { key: "events", label: "Events management", free: true, pro: true, business: true },
+  { key: "bulk_import", label: "CSV bulk import/export", free: true, pro: true, business: true, note: { free: "Capped" } },
+  // Pro
+  { key: "bulk_zip", label: "Bulk ZIP download", free: false, pro: true, business: true },
+  { key: "email_templates", label: "Email templates", free: false, pro: true, business: true },
+  { key: "api_access", label: "REST API", free: false, pro: true, business: true },
+  { key: "smtp_tools", label: "SMTP diagnostics", free: false, pro: true, business: true },
+  { key: "renewal_reminders", label: "Renewal reminders", free: false, pro: true, business: true },
+  { key: "priority_support", label: "Priority support", free: false, pro: true, business: true },
+  // Business
+  { key: "custom_font_upload", label: "Custom font upload", free: false, pro: false, business: true },
+  { key: "unlimited_api", label: "Unlimited API calls", free: false, pro: false, business: true },
+  { key: "multisite", label: "Multisite", free: false, pro: false, business: true },
 ];
 
 const PLANS: Omit<import("../models/Plan.js").PlanDoc, "_id" | "product_id">[] = [
@@ -175,6 +187,10 @@ async function seedCertificateGenerator() {
     );
     featureIdByKey.set(f.key, doc._id);
   }
+
+  // Drop rows for features no longer in the matrix — /api/plans/compare lists
+  // every feature that has a PlanFeature row for these plans.
+  await PlanFeature.deleteMany({ plan_id: { $in: [...planIdBySlug.values()] }, feature_id: { $nin: [...featureIdByKey.values()] } });
 
   for (const f of FEATURE_MATRIX) {
     for (const slug of ["free", "pro", "business"] as const) {

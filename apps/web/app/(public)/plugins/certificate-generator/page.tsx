@@ -21,5 +21,5 @@ async function getCurrentVersion(): Promise<string | null> {
 
 export default async function CertificateGeneratorPage() {
   const currentVersion = await getCurrentVersion();
-  return <ProductLanding content={content as ProductContent} pricingHref="/pricing" productSlug="certificate-generator" currentVersion={currentVersion} />;
+  return <ProductLanding content={content as ProductContent} pricingHref="/certificate-generator/pricing" productSlug="certificate-generator" currentVersion={currentVersion} />;
 }
