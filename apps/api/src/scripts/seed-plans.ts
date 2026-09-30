@@ -33,6 +33,7 @@ const FEATURE_MATRIX: { key: string; label: string; free: boolean; pro: boolean;
   { key: "bulk_send_filters", label: "Bulk Send filters (event, import source) + recipient preflight", free: true, pro: true, business: true },
   { key: "events", label: "Events management", free: true, pro: true, business: true },
   { key: "bulk_import", label: "CSV bulk import/export", free: true, pro: true, business: true, note: { free: "Capped" } },
+  { key: "email_sending", label: "Certificate email & bulk send", free: true, pro: true, business: true, note: { free: "250/mo" } },
   // Pro
   { key: "bulk_zip", label: "Bulk ZIP download", free: false, pro: true, business: true },
   { key: "email_templates", label: "Email templates", free: false, pro: true, business: true },
@@ -54,8 +55,8 @@ const PLANS: Omit<import("../models/Plan.js").PlanDoc, "_id" | "product_id">[] =
     price_monthly: 0,
     price_yearly: 0,
     currency: "usd",
-    cert_limit: 100,
-    bulk_cap: 250,
+    cert_limit: 250,
+    bulk_cap: 500,
     activation_limit: 0,
     cta_label: "Get started free",
     cta_type: "register",

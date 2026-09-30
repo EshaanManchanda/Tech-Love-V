@@ -22,7 +22,8 @@ const faqs = [
   { q: "What happens when I reach my monthly certificate limit?", a: "It resets automatically on the 1st of each month. Usage is tracked and shown as a meter on the plugin's License tab." },
   { q: "How many sites can one license activate?", a: "Pro activates 1 site; Business activates up to 5. Deactivate a site from your dashboard to free up a slot." },
   { q: "Can I cancel or change my plan anytime?", a: "Yes — use Manage Billing on your dashboard to open the Stripe billing portal and update or cancel your subscription." },
-  { q: "Do the bulk import/export caps still apply after I upgrade?", a: "No — the row caps (250 students/teachers/schools, 6 templates) only apply on the Free plan. Pro and Business are unlimited." },
+  { q: "Do the bulk import/export caps still apply after I upgrade?", a: "No — the row caps (500 students/teachers/schools, 10 templates) only apply on the Free plan. Pro and Business are unlimited." },
+  { q: "What happens when I hit the Free email limit?", a: "Free sends up to 250 certificate emails a month. Past that, queued emails wait and send automatically on the 1st — or right away once you upgrade. Pro and Business have no email cap." },
   { q: "How do I activate my license key?", a: "Go to Settings → License in the plugin and paste the key you receive after checkout." },
 ];
 
@@ -101,7 +102,8 @@ export default function PricingPage() {
             <p className="mt-4 text-sm text-slate-600">No license key needed.</p>
             <ul className="mt-2 space-y-1 text-sm text-slate-600">
               <li>{free.certLimit} certificates, reset on the 1st</li>
-              <li>Bulk CSV import/export capped at 250 students, 250 teachers, 250 schools and 6 templates</li>
+              <li>250 certificate emails/mo, including bulk send</li>
+              <li>Bulk CSV import/export capped at 500 students, 500 teachers, 500 schools and 10 templates</li>
             </ul>
             <a href="/register">
               <Button className="mt-6 w-full bg-slate-100 text-slate-900 hover:bg-slate-200">{free.cta.label}</Button>

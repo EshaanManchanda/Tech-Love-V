@@ -13,8 +13,8 @@ export interface PlanCopy {
   priceMonthly: number | null;
   priceYearly: number | null;
   priceNote?: string; // e.g. "Contact for pricing"
-  certLimit: string; // "100/mo" | "1,000/mo" | "Unlimited"
-  bulkCap: string; // "250 rows" | "Unlimited"
+  certLimit: string; // "250/mo" | "1,000/mo" | "Unlimited"
+  bulkCap: string; // "500 rows" | "Unlimited"
   cta: { label: string; type: "checkout" | "contact" | "register" };
   highlight?: boolean;
 }
@@ -25,8 +25,8 @@ export const PLANS: PlanCopy[] = [
     label: "Free",
     priceMonthly: 0,
     priceYearly: 0,
-    certLimit: "100/mo",
-    bulkCap: "250 rows",
+    certLimit: "250/mo",
+    bulkCap: "500 rows",
     cta: { label: "Get started free", type: "register" },
   },
   {
@@ -74,6 +74,7 @@ export const FEATURES: FeatureRow[] = [
   { key: "bulk_send_filters", label: "Bulk Send filters (event, import source) + recipient preflight", free: true, pro: true, business: true },
   { key: "events", label: "Events management", free: true, pro: true, business: true },
   { key: "bulk_import", label: "CSV bulk import/export", free: "Capped", pro: true, business: true },
+  { key: "email_sending", label: "Certificate email & bulk send", free: "250/mo", pro: true, business: true },
   { key: "bulk_zip", label: "Bulk ZIP download", free: false, pro: true, business: true },
   { key: "email_templates", label: "Email templates", free: false, pro: true, business: true },
   { key: "api_access", label: "REST API", free: false, pro: true, business: true },
