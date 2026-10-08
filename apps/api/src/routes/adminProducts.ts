@@ -128,11 +128,10 @@ adminProductsRouter.get("/:id/plans", async (req, res) => {
   res.json(plans);
 });
 
-// Matches Plan.ts's Mongoose enum exactly — slug is a fixed internal identifier
-// (same 4 tiers every product today uses); the admin-facing "name" field is
-// free-form, so a new product's plans still get their own display label/copy.
+// slug is the internal identifier licenses and checkout refer to — free-form,
+// unique per product. A new product can define whatever tiers it needs.
 const planSchema = z.object({
-  slug: z.enum(["free", "pro", "business", "paid"]),
+  slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, "Plan slug must be lowercase letters, numbers and dashes"),
   name: z.string().min(1),
   billing_type: z.enum(["free", "recurring", "contact"]),
   price_monthly: z.number().nullable().optional(),
@@ -142,6 +141,9 @@ const planSchema = z.object({
   cert_limit: z.number().int().min(0),
   bulk_cap: z.number().int().min(0),
   activation_limit: z.number().int().min(0).optional(),
+  stripe_price_monthly: z.string().optional(),
+  stripe_price_yearly: z.string().optional(),
+  license_key_prefix: z.string().regex(/^[A-Za-z0-9]{1,6}$/, "Key prefix must be 1–6 letters or numbers").optional().or(z.literal("")),
   cta_label: z.string().min(1),
   cta_type: z.enum(["register", "checkout", "contact"]),
   highlighted: z.boolean().optional(),

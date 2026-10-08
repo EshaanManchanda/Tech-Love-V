@@ -1,25 +1,20 @@
 import { randomBytes } from "node:crypto";
 import type { Types } from "mongoose";
-import type { PlanSlug } from "../config/plans.js";
 import { License, type LicenseDoc } from "../models/License.js";
 import { Activation } from "../models/Activation.js";
 import { Plan } from "../models/Plan.js";
+import { Product } from "../models/Product.js";
+import { resolveLicensePlan } from "../config/plans.js";
 import { Subscription } from "../models/Subscription.js";
 import { User } from "../models/User.js";
 import { findPrimaryOrganization } from "./organizationService.js";
 
-// Matches the plugin's documented offline-fallback contract (PLAN-COMPARISON.md
-// "License keys (local/offline fallback)") — Pro/Business keys are recognizable
-// by prefix even if a plugin install ever falls back to local validation.
-const KEY_PREFIX: Record<PlanSlug, string> = {
-  pro: "PRO",
-  business: "BIZ",
-  paid: "DT",
-};
-
-export function generateLicenseKey(plan: PlanSlug): string {
+// The prefix (PRO/BIZ/DT/…) comes from the plan — see config/plans.ts
+// resolveLicensePlan(). It matches the plugin's documented offline-fallback
+// contract (PLAN-COMPARISON.md), where keys are recognizable by prefix.
+export function generateLicenseKey(prefix: string): string {
   const group = () => randomBytes(2).toString("hex").toUpperCase();
-  return `${KEY_PREFIX[plan]}-${group()}-${group()}-${group()}-${group()}`;
+  return `${prefix}-${group()}-${group()}-${group()}-${group()}`;
 }
 
 export function isExpired(license: Pick<LicenseDoc, "expires_at">): boolean {
@@ -47,8 +42,10 @@ export interface PlanLimits {
 }
 
 /** Merges the marketing Plan's defaults with any per-license custom_terms override (see routes/admin.ts). */
-export async function effectiveLimits(license: Pick<LicenseDoc, "plan" | "activation_limit" | "custom_terms">): Promise<PlanLimits> {
-  const planDefaults = await Plan.findOne({ slug: license.plan }).lean();
+export async function effectiveLimits(license: Pick<LicenseDoc, "product" | "plan" | "activation_limit" | "custom_terms">): Promise<PlanLimits> {
+  // Plan slugs are only unique per product, so scope the lookup to the license's product.
+  const product = await Product.findOne({ slug: license.product ?? "certificate-generator" }).lean();
+  const planDefaults = product ? await Plan.findOne({ product_id: product._id, slug: license.plan }).lean() : null;
   return {
     activation_limit: license.activation_limit,
     cert_limit: license.custom_terms?.cert_limit ?? planDefaults?.cert_limit ?? 0,
@@ -208,7 +205,8 @@ export async function transferLicense(licenseId: string, currentUserId: string, 
 export async function regenerateLicenseKey(licenseId: string, currentUserId: string): Promise<LicenseDoc | null> {
   const license = await License.findOne({ _id: licenseId, user_id: currentUserId });
   if (!license) return null;
-  license.license_key = generateLicenseKey(license.plan);
+  const licensePlan = await resolveLicensePlan(license.product, license.plan);
+  license.license_key = generateLicenseKey(licensePlan?.key_prefix ?? license.license_key.split("-")[0]);
   license.updated_at = new Date();
   await license.save();
   return license;

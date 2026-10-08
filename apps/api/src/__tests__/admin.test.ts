@@ -2,6 +2,8 @@ import request from "supertest";
 import { beforeAll, describe, expect, it } from "vitest";
 import { createApp } from "../app.js";
 import { License } from "../models/License.js";
+import { Plan } from "../models/Plan.js";
+import { Product } from "../models/Product.js";
 import { User } from "../models/User.js";
 
 const app = createApp();
@@ -114,5 +116,39 @@ describe("POST /api/admin/licenses", () => {
     const meRes = await customerAgent.get("/api/licenses/me");
     expect(meRes.body).toHaveLength(1);
     expect(meRes.body[0].plan).toBe("pro");
+  });
+});
+
+describe("POST /api/admin/licenses — products from the admin CMS", () => {
+  it("issues a license for any product's paid plan, using the plan's limit and a product-derived key prefix", async () => {
+    const product = await Product.create({ name: "Booking Calendar", slug: "booking-calendar" });
+    await Plan.create({
+      product_id: product._id,
+      slug: "pro",
+      name: "Pro",
+      billing_type: "recurring",
+      price_monthly: 4,
+      price_yearly: 40,
+      cert_limit: 0,
+      bulk_cap: 0,
+      activation_limit: 3,
+      cta_label: "Subscribe",
+      cta_type: "checkout",
+    });
+    const customer = await User.create({ name: "Cal", email: `cal${Date.now()}@example.com`, password_hash: "x", role: "customer" });
+
+    const res = await adminAgent.post("/api/admin/licenses").send({ user_id: customer._id.toString(), product: "booking-calendar", plan: "pro" });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({ product: "booking-calendar", plan: "pro", activation_limit: 3 });
+    expect(res.body.license_key).toMatch(/^BC-/); // no prefix set → product initials, not Certificate Generator's PRO-
+  });
+
+  it("rejects a plan the product doesn't have, without creating a customer", async () => {
+    const email = `ghost${Date.now()}@example.com`;
+    const res = await adminAgent.post("/api/admin/licenses").send({ email, name: "Ghost", product: "booking-calendar", plan: "enterprise" });
+
+    expect(res.status).toBe(400);
+    expect(await User.findOne({ email })).toBeNull();
   });
 });

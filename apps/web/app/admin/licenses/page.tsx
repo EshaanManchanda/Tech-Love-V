@@ -25,8 +25,8 @@ interface AdminActivation {
 interface AdminLicense {
   _id: string;
   license_key: string;
-  product: "certificate-generator" | "dynamic-tags";
-  plan: "pro" | "business" | "paid";
+  product: string;
+  plan: string;
   status: string;
   expires_at: string;
   flagged?: boolean;
@@ -41,7 +41,27 @@ interface AdminCustomer {
   email: string;
 }
 
-const PLAN_DEFAULT_ACTIVATIONS: Record<"pro" | "business" | "paid", number> = { pro: 1, business: 5, paid: 1 };
+interface AdminProduct {
+  _id: string;
+  name: string;
+  slug: string;
+  status: "active" | "archived";
+}
+
+interface AdminPlan {
+  _id: string;
+  slug: string;
+  name: string;
+  billing_type: "free" | "recurring" | "contact";
+  activation_limit: number;
+  status: "active" | "archived";
+}
+
+// Every product and its plans come from the admin Products CMS, so a newly
+// created product can be licensed here without a code change.
+function useAdminProducts() {
+  return useQuery<AdminProduct[]>({ queryKey: ["admin", "products"], queryFn: () => api("/api/admin/products") });
+}
 
 function IssueLicenseDialog({ onIssued }: { onIssued: () => void }) {
   const [open, setOpen] = useState(false);
@@ -49,8 +69,8 @@ function IssueLicenseDialog({ onIssued }: { onIssued: () => void }) {
   const [userId, setUserId] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [product, setProduct] = useState<"certificate-generator" | "dynamic-tags">("certificate-generator");
-  const [plan, setPlan] = useState<"pro" | "business" | "paid">("pro");
+  const [product, setProduct] = useState("certificate-generator");
+  const [plan, setPlan] = useState("");
   const [licenseType, setLicenseType] = useState<"standard" | "trial">("standard");
   const [activationLimit, setActivationLimit] = useState<string>("");
   const [durationDays, setDurationDays] = useState("365");
@@ -58,6 +78,17 @@ function IssueLicenseDialog({ onIssued }: { onIssued: () => void }) {
   const [certLimit, setCertLimit] = useState("");
   const [bulkCap, setBulkCap] = useState("");
   const [priceNote, setPriceNote] = useState("");
+
+  const { data: allProducts } = useAdminProducts();
+  const products = allProducts?.filter((p) => p.status === "active");
+  const productId = products?.find((p) => p.slug === product)?._id;
+  const { data: allPlans } = useQuery<AdminPlan[]>({
+    queryKey: ["admin", "products", productId, "plans"],
+    queryFn: () => api(`/api/admin/products/${productId}/plans`),
+    enabled: open && !!productId,
+  });
+  // Only paid tiers are licensable — the Free plan never has a license key.
+  const plans = allPlans?.filter((p) => p.status === "active" && p.billing_type !== "free");
 
   const { data: customers } = useQuery<AdminCustomer[]>({
     queryKey: ["admin", "customers"],
@@ -71,7 +102,7 @@ function IssueLicenseDialog({ onIssued }: { onIssued: () => void }) {
     setName("");
     setEmail("");
     setProduct("certificate-generator");
-    setPlan("pro");
+    setPlan("");
     setLicenseType("standard");
     setActivationLimit("");
     setDurationDays("365");
@@ -81,7 +112,12 @@ function IssueLicenseDialog({ onIssued }: { onIssued: () => void }) {
     setPriceNote("");
   };
 
-  const effectivePlan = product === "dynamic-tags" ? "paid" : licenseType === "trial" ? "business" : plan;
+  // Certificate Generator trials are always Business-tier grants (enforced server-side too).
+  const trialForcesBusiness = licenseType === "trial" && product === "certificate-generator";
+  const effectivePlan = trialForcesBusiness ? "business" : plan || plans?.[0]?.slug || "";
+  const selectedPlan = plans?.find((p) => p.slug === effectivePlan);
+  // Negotiated terms apply to contact-for-pricing tiers (e.g. Certificate Generator Business).
+  const showCustomTerms = licenseType === "standard" && selectedPlan?.billing_type === "contact";
 
   const issue = useMutation({
     mutationFn: () =>
@@ -89,13 +125,14 @@ function IssueLicenseDialog({ onIssued }: { onIssued: () => void }) {
         method: "POST",
         body: JSON.stringify({
           ...(mode === "existing" ? { user_id: userId } : { email, name }),
+          product,
           plan: effectivePlan,
-          license_type: product === "dynamic-tags" ? "standard" : licenseType,
+          license_type: licenseType,
           activation_limit: activationLimit ? Number(activationLimit) : undefined,
           duration_days: durationDays ? Number(durationDays) : undefined,
           trial_duration_days: licenseType === "trial" ? Number(trialDurationDays) : undefined,
           custom_terms:
-            product === "certificate-generator" && plan === "business" && (certLimit || bulkCap || priceNote)
+            showCustomTerms && (certLimit || bulkCap || priceNote)
               ? {
                   cert_limit: certLimit ? Number(certLimit) : undefined,
                   bulk_cap: bulkCap ? Number(bulkCap) : undefined,
@@ -113,7 +150,7 @@ function IssueLicenseDialog({ onIssued }: { onIssued: () => void }) {
     onError: (err) => toast.error(err instanceof ApiError ? err.message : "Couldn't issue the license."),
   });
 
-  const canSubmit = mode === "existing" ? !!userId : !!email && !!name;
+  const canSubmit = (mode === "existing" ? !!userId : !!email && !!name) && !!effectivePlan;
 
   return (
     <Dialog open={open} onOpenChange={(o) => (o ? setOpen(true) : (setOpen(false), reset()))}>
@@ -132,17 +169,15 @@ function IssueLicenseDialog({ onIssued }: { onIssued: () => void }) {
             className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             value={product}
             onChange={(e) => {
-              const next = e.target.value as "certificate-generator" | "dynamic-tags";
-              setProduct(next);
-              if (next === "dynamic-tags") {
-                setLicenseType("standard");
-              } else {
-                setPlan("pro");
-              }
+              setProduct(e.target.value);
+              setPlan(""); // fall back to the new product's first paid plan
             }}
           >
-            <option value="certificate-generator">Certificate Generator</option>
-            <option value="dynamic-tags">Dynamic Tags</option>
+            {products?.map((p) => (
+              <option key={p.slug} value={p.slug}>
+                {p.name}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -188,31 +223,28 @@ function IssueLicenseDialog({ onIssued }: { onIssued: () => void }) {
             <select
               id="issue-type"
               className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-60"
-              value={product === "dynamic-tags" ? "standard" : licenseType}
-              disabled={product === "dynamic-tags"}
+              value={licenseType}
               onChange={(e) => setLicenseType(e.target.value as "standard" | "trial")}
             >
               <option value="standard">Standard</option>
-              <option value="trial">Trial / Promo (Business, per-site)</option>
+              <option value="trial">Trial / Promo (per-site)</option>
             </select>
           </div>
           <div>
             <Label htmlFor="issue-plan">Plan</Label>
             <select
               id="issue-plan"
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm capitalize disabled:opacity-60"
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:opacity-60"
               value={effectivePlan}
-              disabled={product === "dynamic-tags" || licenseType === "trial"}
-              onChange={(e) => setPlan(e.target.value as "pro" | "business")}
+              disabled={trialForcesBusiness}
+              onChange={(e) => setPlan(e.target.value)}
             >
-              {product === "dynamic-tags" ? (
-                <option value="paid">Paid</option>
-              ) : (
-                <>
-                  <option value="pro">Pro</option>
-                  <option value="business">Business</option>
-                </>
-              )}
+              {plans?.length === 0 && <option value="">No paid plans — add one under Products</option>}
+              {plans?.map((p) => (
+                <option key={p.slug} value={p.slug}>
+                  {p.name}
+                </option>
+              ))}
             </select>
           </div>
           <div>
@@ -221,7 +253,7 @@ function IssueLicenseDialog({ onIssued }: { onIssued: () => void }) {
               id="issue-activation-limit"
               type="number"
               min={1}
-              placeholder={String(PLAN_DEFAULT_ACTIVATIONS[effectivePlan])}
+              placeholder={selectedPlan?.activation_limit ? String(selectedPlan.activation_limit) : "Plan default"}
               value={activationLimit}
               onChange={(e) => setActivationLimit(e.target.value)}
               className="mt-1"
@@ -247,7 +279,7 @@ function IssueLicenseDialog({ onIssued }: { onIssued: () => void }) {
           )}
         </div>
 
-        {product === "certificate-generator" && licenseType === "standard" && plan === "business" && (
+        {showCustomTerms && (
           <div className="mt-4 space-y-3 border-t border-border pt-4">
             <p className="text-xs font-medium text-muted-foreground">Custom business terms (optional)</p>
             <div className="grid grid-cols-2 gap-3">
@@ -290,6 +322,9 @@ export default function AdminLicensesPage() {
     queryKey: ["admin", "licenses"],
     queryFn: () => api("/api/admin/licenses"),
   });
+
+  const { data: productList } = useAdminProducts();
+  const productName = (slug: string) => productList?.find((p) => p.slug === slug)?.name ?? slug;
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["admin", "licenses"] });
 
@@ -338,7 +373,7 @@ export default function AdminLicensesPage() {
                   <div className="text-xs text-muted-foreground">{l.user_id?.email}</div>
                 </TableCell>
                 <TableCell className="font-mono text-xs">{l.license_key}</TableCell>
-                <TableCell className="text-xs">{l.product === "dynamic-tags" ? "Dynamic Tags" : "Certificate Generator"}</TableCell>
+                <TableCell className="text-xs">{productName(l.product)}</TableCell>
                 <TableCell className="capitalize">
                   {l.plan}
                   {l.license_type === "trial" && <span className="ml-1 text-xs text-muted-foreground">(trial)</span>}

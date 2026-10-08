@@ -4,8 +4,10 @@ import { Product } from "../models/Product.js";
 
 export const downloadsRouter = Router();
 
+// Any product slug works (including ones created later in the admin Products
+// CMS); no ?product= keeps old plugin builds downloading Certificate Generator.
 function resolveSlug(req: { query: { product?: unknown } }): string {
-  return req.query.product === "dynamic-tags" ? "dynamic-tags" : "certificate-generator";
+  return typeof req.query.product === "string" && req.query.product ? req.query.product : "certificate-generator";
 }
 
 async function currentVersion(slug: string) {

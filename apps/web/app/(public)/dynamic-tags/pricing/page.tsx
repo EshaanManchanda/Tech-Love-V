@@ -52,7 +52,7 @@ export default function DynamicTagsPricingPage() {
     try {
       const { url } = await api<{ url: string }>("/api/checkout/session", {
         method: "POST",
-        body: JSON.stringify({ plan: "paid", billing_cycle: cycle }),
+        body: JSON.stringify({ product: "dynamic-tags", plan: "paid", billing_cycle: cycle }),
       });
       window.location.href = url;
     } finally {

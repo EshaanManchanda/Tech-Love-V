@@ -1,9 +1,8 @@
 import { Schema, model, Types } from "mongoose";
 
-// All three marketing tiers, including "free" — which has no matching License
-// document (apps/api/src/config/plans.ts's PlanSlug only covers the two
-// license-bearing tiers). This type is for the website's pricing display only.
-export type MarketingPlanSlug = "free" | "pro" | "business" | "paid";
+// Plan slugs are free-form and only unique within a product, so a new product
+// can define its own tiers. "free" billing_type plans never get a License.
+export type MarketingPlanSlug = string;
 
 export interface PlanDoc {
   _id: Types.ObjectId;
@@ -18,6 +17,9 @@ export interface PlanDoc {
   cert_limit: number; // certificates/month; 0 = unlimited (mirrors plugin's CG_License_Manager::LIMITS)
   bulk_cap: number; // bulk import/export row cap; 0 = unlimited
   activation_limit: number; // sites a license can activate; 0 = n/a (free has no license)
+  stripe_price_monthly?: string; // Stripe price ids for checkout; unset → legacy env vars (config/plans.ts)
+  stripe_price_yearly?: string;
+  license_key_prefix?: string; // e.g. "PRO" → PRO-XXXX-…; unset → legacy prefix or product initials
   cta_label: string;
   cta_type: "register" | "checkout" | "contact";
   highlighted: boolean;
@@ -27,7 +29,7 @@ export interface PlanDoc {
 
 const planSchema = new Schema<PlanDoc>({
   product_id: { type: Schema.Types.ObjectId, ref: "Product", required: true },
-  slug: { type: String, enum: ["free", "pro", "business", "paid"], required: true },
+  slug: { type: String, required: true, lowercase: true, trim: true },
   name: { type: String, required: true },
   billing_type: { type: String, enum: ["free", "recurring", "contact"], required: true },
   price_monthly: { type: Number, default: null },
@@ -37,6 +39,9 @@ const planSchema = new Schema<PlanDoc>({
   cert_limit: { type: Number, required: true },
   bulk_cap: { type: Number, required: true },
   activation_limit: { type: Number, default: 0 },
+  stripe_price_monthly: String,
+  stripe_price_yearly: String,
+  license_key_prefix: { type: String, uppercase: true, trim: true },
   cta_label: { type: String, required: true },
   cta_type: { type: String, enum: ["register", "checkout", "contact"], required: true },
   highlighted: { type: Boolean, default: false },

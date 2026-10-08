@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { Router } from "express";
 import { z } from "zod";
-import { activationLimitFor, productForPlan, type PlanSlug } from "../config/plans.js";
+import { defaultProductForPlan, resolveLicensePlan } from "../config/plans.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
 import { Activation } from "../models/Activation.js";
 import { AuditLog } from "../models/AuditLog.js";
@@ -9,6 +9,7 @@ import { Coupon } from "../models/Coupon.js";
 import { FeatureFlag } from "../models/FeatureFlag.js";
 import { License } from "../models/License.js";
 import { Plan } from "../models/Plan.js";
+import { Product } from "../models/Product.js";
 import { Subscription } from "../models/Subscription.js";
 import { User } from "../models/User.js";
 import { enqueueEmail } from "../queues/emailQueue.js";
@@ -164,7 +165,8 @@ const createLicenseSchema = z
     user_id: z.string().min(1).optional(),
     email: z.string().email().optional(),
     name: z.string().min(1).optional(),
-    plan: z.enum(["pro", "business", "paid"]),
+    product: z.string().min(1).optional(), // omitted by older clients — inferred from the plan slug
+    plan: z.string().min(1),
     activation_limit: z.number().int().positive().optional(),
     duration_days: z.number().int().positive().optional(),
     expires_at: z.string().optional(),
@@ -177,15 +179,20 @@ const createLicenseSchema = z
   .refine((data) => !!data.user_id !== !!data.email, {
     message: "Provide either user_id (existing customer) or email+name (new customer), not both.",
   })
-  .refine((data) => !data.email || !!data.name, { message: "name is required when creating a new customer." })
-  .refine((data) => data.plan !== "paid" || data.license_type !== "trial", {
-    message: "Dynamic Tags has no trial plan.",
-  });
+  .refine((data) => !data.email || !!data.name, { message: "name is required when creating a new customer." });
 
 adminRouter.post("/licenses", async (req, res) => {
   const parsed = createLicenseSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: { code: "INVALID_INPUT", message: parsed.error.issues[0].message } });
   const data = parsed.data;
+  const isTrial = data.license_type === "trial";
+  const productSlug = data.product ?? defaultProductForPlan(data.plan);
+  // Certificate Generator trials have always been Business-tier grants; other products trial the chosen plan.
+  const planSlug = isTrial && productSlug === "certificate-generator" ? "business" : data.plan;
+  const licensePlan = await resolveLicensePlan(productSlug, planSlug);
+  if (!licensePlan) {
+    return res.status(400).json({ error: { code: "INVALID_INPUT", message: `"${planSlug}" isn't an active paid plan of ${productSlug}.` } });
+  }
 
   let user;
   let isNewUser = false;
@@ -203,21 +210,19 @@ adminRouter.post("/licenses", async (req, res) => {
   }
 
   const organization = await findPrimaryOrganization(user._id);
-  const isTrial = data.license_type === "trial";
-  const plan: PlanSlug = isTrial ? "business" : (data.plan as PlanSlug);
   // Trial expiry is tracked per-site (Activation.expires_at, set on first activation) — the
   // License itself gets a far-future placeholder so the shared isExpired() check never trips it.
   const expiresAt = isTrial ? "2099-12-31" : (data.expires_at ?? addDays(todayIsoDate(), data.duration_days ?? 365));
 
-  const product = productForPlan(plan);
+  const { product, plan } = licensePlan;
   const license = await License.create({
-    license_key: generateLicenseKey(plan),
+    license_key: generateLicenseKey(licensePlan.key_prefix),
     user_id: user._id,
     organization_id: organization?._id,
     product,
     plan,
     status: "active",
-    activation_limit: data.activation_limit ?? activationLimitFor(plan),
+    activation_limit: data.activation_limit ?? licensePlan.activation_limit,
     expires_at: expiresAt,
     custom_terms: data.custom_terms,
     license_type: data.license_type ?? "standard",
@@ -357,12 +362,15 @@ adminRouter.get("/analytics/overview", async (_req, res) => {
     Activation.countDocuments(),
   ]);
 
-  const priceByPlanSlug = new Map(plans.map((p) => [p.slug, p]));
+  // Plan slugs repeat across products ("pro" can exist on several), so key prices by product + plan.
+  const products = await Product.find({}, { slug: 1 }).lean();
+  const slugById = new Map(products.map((p) => [p._id.toString(), p.slug]));
+  const priceByPlanSlug = new Map(plans.map((p) => [`${slugById.get(p.product_id.toString())}:${p.slug}`, p]));
   let mrr = 0;
   const planDistribution: Record<string, number> = {};
   for (const sub of activeSubs) {
     planDistribution[sub.plan] = (planDistribution[sub.plan] ?? 0) + 1;
-    const plan = priceByPlanSlug.get(sub.plan);
+    const plan = priceByPlanSlug.get(`${sub.product ?? defaultProductForPlan(sub.plan)}:${sub.plan}`);
     if (!plan) continue;
     mrr += sub.billing_cycle === "yearly" ? (plan.price_yearly ?? 0) / 12 : (plan.price_monthly ?? 0);
   }
@@ -394,7 +402,7 @@ const couponCreateSchema = z.object({
   value: z.number().positive(),
   max_redemptions: z.number().int().positive().optional(),
   expires_at: z.string().datetime().optional(),
-  applicable_plans: z.array(z.enum(["free", "pro", "business"])).optional(),
+  applicable_plans: z.array(z.string().min(1)).optional(),
   // Required for free_trial/free_months — those need a Stripe coupon created
   // manually (trial/repeating-duration coupons aren't a simple percent/amount off).
   stripe_coupon_id: z.string().optional(),

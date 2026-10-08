@@ -1,4 +1,4 @@
-import { priceIdFor, stripe } from "../stripeClient.js";
+import { stripe } from "../stripeClient.js";
 import type { CreateCheckoutParams, PaymentProvider, ProviderSubscription } from "./PaymentProvider.js";
 
 function toProviderSubscription(sub: {
@@ -26,7 +26,7 @@ export const stripeProvider: PaymentProvider = {
       client_reference_id: params.userId,
       customer_email: params.stripeCustomerId ? undefined : params.email,
       customer: params.stripeCustomerId,
-      line_items: [{ price: priceIdFor(params.plan, params.cycle), quantity: 1 }],
+      line_items: [{ price: params.priceId, quantity: 1 }],
       ...(params.providerCouponId ? { discounts: [{ coupon: params.providerCouponId }] } : { allow_promotion_codes: true }),
       metadata: params.metadata,
       success_url: params.successUrl,

@@ -63,7 +63,7 @@ export default function PricingPage() {
     try {
       const { url } = await api<{ url: string }>("/api/checkout/session", {
         method: "POST",
-        body: JSON.stringify({ plan: "pro", billing_cycle: cycle }),
+        body: JSON.stringify({ product: "certificate-generator", plan: "pro", billing_cycle: cycle }),
       });
       window.location.href = url;
     } finally {

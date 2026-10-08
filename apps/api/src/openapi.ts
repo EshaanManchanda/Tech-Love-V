@@ -46,7 +46,7 @@ export const openApiSpec = {
         properties: {
           _id: { type: "string" },
           license_key: { type: "string", example: "PRO-A1B2-C3D4-E5F6-A7B8" },
-          plan: { type: "string", enum: ["pro", "business", "paid"] },
+          plan: { type: "string", description: "Plan slug (unique within its product)" },
           status: { type: "string", enum: ["active", "expired", "cancelled", "suspended"] },
           expires_at: { type: "string", example: "2027-09-09" },
           activation_limit: { type: "integer" },
@@ -57,7 +57,7 @@ export const openApiSpec = {
         type: "object",
         properties: {
           _id: { type: "string" },
-          plan: { type: "string", enum: ["pro", "business", "paid"] },
+          plan: { type: "string", description: "Plan slug (unique within its product)" },
           status: { type: "string" },
           billing_cycle: { type: "string", enum: ["monthly", "yearly"] },
           current_period_end: { type: "string", format: "date-time" },
@@ -91,7 +91,7 @@ export const openApiSpec = {
           success: { type: "boolean" },
           valid: { type: "boolean" },
           status: { type: "string", enum: ["active", "invalid", "expired", "suspended", "cancelled"] },
-          plan: { type: "string", enum: ["pro", "business", "paid"] },
+          plan: { type: "string", description: "Plan slug (unique within its product)" },
           expiry: { type: "string", example: "2027-09-09" },
           limits: {
             type: "object",
@@ -148,7 +148,7 @@ export const openApiSpec = {
       get: {
         summary: "List active plans",
         tags: ["Plans"],
-        parameters: [{ name: "product", in: "query", required: false, schema: { type: "string", enum: ["certificate-generator", "dynamic-tags"] }, description: "Defaults to certificate-generator." }],
+        parameters: [{ name: "product", in: "query", required: false, schema: { type: "string" }, description: "Product slug. Defaults to certificate-generator." }],
         responses: { "200": { description: "OK" } },
       },
     },
@@ -156,7 +156,7 @@ export const openApiSpec = {
       get: {
         summary: "Plan + feature comparison matrix for the pricing page",
         tags: ["Plans"],
-        parameters: [{ name: "product", in: "query", required: false, schema: { type: "string", enum: ["certificate-generator", "dynamic-tags"] }, description: "Defaults to certificate-generator." }],
+        parameters: [{ name: "product", in: "query", required: false, schema: { type: "string" }, description: "Product slug. Defaults to certificate-generator." }],
         responses: { "200": { description: "OK" } },
       },
     },
@@ -165,8 +165,8 @@ export const openApiSpec = {
         summary: "One plan by slug",
         tags: ["Plans"],
         parameters: [
-          { name: "slug", in: "path", required: true, schema: { type: "string", enum: ["free", "pro", "business", "paid"] } },
-          { name: "product", in: "query", required: false, schema: { type: "string", enum: ["certificate-generator", "dynamic-tags"] }, description: "Defaults to certificate-generator." },
+          { name: "slug", in: "path", required: true, schema: { type: "string" } },
+          { name: "product", in: "query", required: false, schema: { type: "string" }, description: "Product slug. Defaults to certificate-generator." },
         ],
         responses: { "200": { description: "OK" }, "404": { description: "Not found" } },
       },
@@ -177,7 +177,7 @@ export const openApiSpec = {
         summary: "Create a Stripe Checkout session",
         tags: ["Billing"],
         security: [cookieAuth],
-        requestBody: { content: { "application/json": { schema: { properties: { plan: { enum: ["pro", "business", "paid"] }, billing_cycle: { enum: ["monthly", "yearly"] }, coupon_code: {} } } } } },
+        requestBody: { content: { "application/json": { schema: { properties: { product: { type: "string" }, plan: { type: "string" }, billing_cycle: { enum: ["monthly", "yearly"] }, coupon_code: {} } } } } },
         responses: { "200": { description: "OK — { url }" } },
       },
     },

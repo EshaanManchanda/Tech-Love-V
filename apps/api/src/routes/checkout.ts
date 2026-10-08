@@ -3,17 +3,38 @@ import { z } from "zod";
 import { requireAuth } from "../middleware/auth.js";
 import { Coupon } from "../models/Coupon.js";
 import { User } from "../models/User.js";
+import { defaultProductForPlan, priceIdFor, resolveLicensePlan } from "../config/plans.js";
 import { stripeProvider } from "../services/payments/stripe.provider.js";
 
 export const checkoutRouter = Router();
 
 const appUrl = () => process.env.APP_URL ?? "http://localhost:3000";
 
+// The two original products have dedicated pricing pages; any other product's
+// plans are shown on its generic /plugins/<slug> page.
+const DEDICATED_PRICING = new Set(["certificate-generator", "dynamic-tags"]);
+const pricingPath = (product: string) => (DEDICATED_PRICING.has(product) ? `/${product}/pricing` : `/plugins/${product}`);
+
 checkoutRouter.post("/session", requireAuth, async (req, res) => {
   const parsed = z
-    .object({ plan: z.enum(["pro", "business", "paid"]), billing_cycle: z.enum(["monthly", "yearly"]), coupon_code: z.string().optional() })
+    .object({
+      product: z.string().min(1).optional(), // omitted by older clients — inferred from the plan slug
+      plan: z.string().min(1),
+      billing_cycle: z.enum(["monthly", "yearly"]),
+      coupon_code: z.string().optional(),
+    })
     .safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: { code: "INVALID_INPUT", message: "plan and billing_cycle are required" } });
+
+  const productSlug = parsed.data.product ?? defaultProductForPlan(parsed.data.plan);
+  const licensePlan = await resolveLicensePlan(productSlug, parsed.data.plan);
+  if (!licensePlan) return res.status(400).json({ error: { code: "INVALID_INPUT", message: "That plan isn't available for checkout." } });
+  let priceId: string;
+  try {
+    priceId = priceIdFor(licensePlan, parsed.data.billing_cycle);
+  } catch {
+    return res.status(400).json({ error: { code: "PLAN_NOT_PURCHASABLE", message: `No ${parsed.data.billing_cycle} price is set up for this plan yet.` } });
+  }
 
   const user = await User.findById(req.user!.id);
   if (!user) return res.status(404).json({ error: { code: "NOT_FOUND", message: "User not found." } });
@@ -40,12 +61,14 @@ checkoutRouter.post("/session", requireAuth, async (req, res) => {
     userId: user._id.toString(),
     email: user.email,
     stripeCustomerId: user.stripe_customer_id,
-    plan: parsed.data.plan,
+    priceId,
     cycle: parsed.data.billing_cycle,
     providerCouponId,
-    metadata: couponId ? { coupon_id: couponId } : undefined,
+    // The webhook reads product/plan from here first — a price id alone can't
+    // tell two products apart if they ever share one.
+    metadata: { product: productSlug, plan: parsed.data.plan, ...(couponId ? { coupon_id: couponId } : {}) },
     successUrl: `${appUrl()}/dashboard?checkout=success`,
-    cancelUrl: `${appUrl()}/${parsed.data.plan === "paid" ? "dynamic-tags" : "certificate-generator"}/pricing?checkout=cancelled`,
+    cancelUrl: `${appUrl()}${pricingPath(productSlug)}?checkout=cancelled`,
   });
 
   res.json({ url });

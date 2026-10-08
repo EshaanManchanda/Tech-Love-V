@@ -1,6 +1,6 @@
 import { Router } from "express";
 import type Stripe from "stripe";
-import { activationLimitFor, productForPlan } from "../config/plans.js";
+import { planForPriceId, resolveLicensePlan } from "../config/plans.js";
 import { Coupon } from "../models/Coupon.js";
 import { CouponRedemption } from "../models/CouponRedemption.js";
 import { License } from "../models/License.js";
@@ -11,7 +11,7 @@ import { generateLicenseKey } from "../services/licenseService.js";
 import { findPrimaryOrganization } from "../services/organizationService.js";
 import { enqueueEmail } from "../queues/emailQueue.js";
 import { stripeProvider } from "../services/payments/stripe.provider.js";
-import { planForPriceId, stripe } from "../services/stripeClient.js";
+import { stripe } from "../services/stripeClient.js";
 
 export const stripeWebhookRouter = Router();
 
@@ -44,8 +44,11 @@ stripeWebhookRouter.post("/", async (req, res) => {
 
       const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
       const priceId = subscription.items.data[0]?.price.id;
-      const plan = priceId ? planForPriceId(priceId) : null;
-      if (!plan) break;
+      const fromMetadata = session.metadata?.product && session.metadata?.plan ? { product: session.metadata.product, plan: session.metadata.plan } : null;
+      const target = fromMetadata ?? (priceId ? await planForPriceId(priceId) : null);
+      const licensePlan = target ? await resolveLicensePlan(target.product, target.plan) : null;
+      if (!licensePlan) break;
+      const { plan, product } = licensePlan;
 
       const user = await User.findById(userId);
       if (!user) break;
@@ -63,6 +66,7 @@ stripeWebhookRouter.post("/", async (req, res) => {
         {
           user_id: user._id,
           organization_id: organization?._id,
+          product,
           plan,
           provider: "stripe",
           provider_subscription_id: subscription.id,
@@ -77,16 +81,15 @@ stripeWebhookRouter.post("/", async (req, res) => {
       );
 
       const licenseExpiresAt = toIsoDate(subscription.current_period_end);
-      const product = productForPlan(plan);
       const license = await License.create({
-        license_key: generateLicenseKey(plan),
+        license_key: generateLicenseKey(licensePlan.key_prefix),
         user_id: user._id,
         organization_id: organization?._id,
         subscription_id: subDoc._id,
         product,
         plan,
         status: "active",
-        activation_limit: activationLimitFor(plan),
+        activation_limit: licensePlan.activation_limit,
         expires_at: licenseExpiresAt,
         // Legacy fields kept for licenses issued before Subscription existed — see model comment.
         stripe_subscription_id: subscription.id,

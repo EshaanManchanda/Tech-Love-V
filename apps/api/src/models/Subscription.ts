@@ -1,5 +1,4 @@
 import { Schema, model, Types } from "mongoose";
-import type { PlanSlug } from "../config/plans.js";
 
 export type SubscriptionStatus = "trialing" | "active" | "past_due" | "paused" | "cancelled" | "expired" | "unpaid";
 export type BillingCycle = "monthly" | "yearly";
@@ -8,7 +7,8 @@ export interface SubscriptionDoc {
   _id: Types.ObjectId;
   user_id: Types.ObjectId;
   organization_id?: Types.ObjectId;
-  plan: PlanSlug;
+  product?: string; // Product.slug — unset on subscriptions created before multi-product licensing
+  plan: string;
   provider: "stripe";
   provider_subscription_id: string;
   provider_price_id: string;
@@ -25,7 +25,8 @@ export interface SubscriptionDoc {
 const subscriptionSchema = new Schema<SubscriptionDoc>({
   user_id: { type: Schema.Types.ObjectId, ref: "User", required: true },
   organization_id: { type: Schema.Types.ObjectId, ref: "Organization" },
-  plan: { type: String, enum: ["pro", "business"], required: true },
+  product: String,
+  plan: { type: String, required: true },
   provider: { type: String, enum: ["stripe"], default: "stripe" },
   provider_subscription_id: { type: String, required: true, unique: true },
   provider_price_id: { type: String, required: true },

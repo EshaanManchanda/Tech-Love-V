@@ -1,11 +1,10 @@
-import type { PlanSlug } from "../../config/plans.js";
 import type { BillingCycle } from "../../models/Subscription.js";
 
 export interface CreateCheckoutParams {
   userId: string;
   email: string;
   stripeCustomerId?: string;
-  plan: PlanSlug;
+  priceId: string; // resolve with config/plans.ts priceIdFor() before calling
   cycle: BillingCycle;
   successUrl: string;
   cancelUrl: string;

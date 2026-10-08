@@ -27,11 +27,15 @@ interface AdminProduct {
 
 interface AdminPlan {
   _id: string;
-  slug: "free" | "pro" | "business" | "paid";
+  slug: string;
   name: string;
   billing_type: "free" | "recurring" | "contact";
   price_monthly: number | null;
   price_yearly: number | null;
+  activation_limit?: number;
+  stripe_price_monthly?: string;
+  stripe_price_yearly?: string;
+  license_key_prefix?: string;
   cta_label: string;
   cta_type: "register" | "checkout" | "contact";
   status: "active" | "archived";
@@ -94,112 +98,128 @@ function DetailsTab({ product, onSaved }: { product: AdminProduct; onSaved: () =
   );
 }
 
-function NewPlanDialog({ productId, onCreated }: { productId: string; onCreated: () => void }) {
+const CTA_FOR_BILLING: Record<AdminPlan["billing_type"], AdminPlan["cta_type"]> = { free: "register", recurring: "checkout", contact: "contact" };
+
+// Create a plan, or edit one when `plan` is given. Paid plans carry everything
+// licensing needs — activation limit, Stripe price ids and the key prefix — so
+// a brand-new product can be sold and licensed without a code change.
+function PlanDialog({ productId, plan, onSaved }: { productId: string; plan?: AdminPlan; onSaved: () => void }) {
   const [open, setOpen] = useState(false);
-  const [slug, setSlug] = useState<AdminPlan["slug"]>("pro");
-  const [name, setName] = useState("");
-  const [billingType, setBillingType] = useState<AdminPlan["billing_type"]>("recurring");
-  const [priceMonthly, setPriceMonthly] = useState("");
-  const [priceYearly, setPriceYearly] = useState("");
-  const [ctaLabel, setCtaLabel] = useState("Upgrade");
-  const [ctaType, setCtaType] = useState<AdminPlan["cta_type"]>("checkout");
+  const initial = () => ({
+    slug: plan?.slug ?? "",
+    name: plan?.name ?? "",
+    billingType: plan?.billing_type ?? ("recurring" as AdminPlan["billing_type"]),
+    priceMonthly: plan?.price_monthly?.toString() ?? "",
+    priceYearly: plan?.price_yearly?.toString() ?? "",
+    activationLimit: plan?.activation_limit ? String(plan.activation_limit) : "1",
+    stripeMonthly: plan?.stripe_price_monthly ?? "",
+    stripeYearly: plan?.stripe_price_yearly ?? "",
+    keyPrefix: plan?.license_key_prefix ?? "",
+    ctaLabel: plan?.cta_label ?? "Subscribe",
+  });
+  const [form, setForm] = useState(initial);
+  const set = (key: keyof ReturnType<typeof initial>) => (e: { target: { value: string } }) => setForm((f) => ({ ...f, [key]: e.target.value }));
+  const paid = form.billingType !== "free";
 
-  const reset = () => {
-    setSlug("pro");
-    setName("");
-    setBillingType("recurring");
-    setPriceMonthly("");
-    setPriceYearly("");
-    setCtaLabel("Upgrade");
-    setCtaType("checkout");
-  };
-
-  const create = useMutation({
+  const save = useMutation({
     mutationFn: () =>
-      api(`/api/admin/products/${productId}/plans`, {
-        method: "POST",
+      api(`/api/admin/products/${productId}/plans${plan ? `/${plan._id}` : ""}`, {
+        method: plan ? "PATCH" : "POST",
         body: JSON.stringify({
-          slug,
-          name,
-          billing_type: billingType,
-          price_monthly: priceMonthly ? Number(priceMonthly) : null,
-          price_yearly: priceYearly ? Number(priceYearly) : null,
-          cert_limit: 0,
-          bulk_cap: 0,
-          cta_label: ctaLabel,
-          cta_type: ctaType,
+          ...(plan ? {} : { slug: form.slug.trim().toLowerCase(), cert_limit: 0, bulk_cap: 0 }),
+          name: form.name,
+          billing_type: form.billingType,
+          price_monthly: form.priceMonthly ? Number(form.priceMonthly) : null,
+          price_yearly: form.priceYearly ? Number(form.priceYearly) : null,
+          activation_limit: paid ? Number(form.activationLimit) || 1 : 0,
+          stripe_price_monthly: form.stripeMonthly.trim() || undefined,
+          stripe_price_yearly: form.stripeYearly.trim() || undefined,
+          license_key_prefix: form.keyPrefix.trim(),
+          cta_label: form.ctaLabel,
+          cta_type: CTA_FOR_BILLING[form.billingType],
         }),
       }),
     onSuccess: () => {
-      toast.success("Plan added.");
-      onCreated();
+      toast.success(plan ? "Plan saved." : "Plan added.");
+      onSaved();
       setOpen(false);
-      reset();
     },
-    onError: (err) => toast.error(err instanceof ApiError ? err.message : "Couldn't add the plan."),
+    onError: (err) => toast.error(err instanceof ApiError ? err.message : "Couldn't save the plan."),
   });
 
   return (
-    <Dialog open={open} onOpenChange={(o) => (o ? setOpen(true) : (setOpen(false), reset()))}>
+    <Dialog open={open} onOpenChange={(o) => (setOpen(o), o && setForm(initial()))}>
       <DialogTrigger asChild>
-        <Button size="sm">New plan</Button>
+        {plan ? <Button variant="outline" size="sm">Edit</Button> : <Button size="sm">New plan</Button>}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>New plan</DialogTitle>
+          <DialogTitle>{plan ? `Edit ${plan.name}` : "New plan"}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
-          <div>
-            <Label htmlFor="plan-slug">Tier</Label>
-            <select
-              id="plan-slug"
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value as AdminPlan["slug"])}
-            >
-              <option value="free">Free</option>
-              <option value="pro">Pro</option>
-              <option value="business">Business</option>
-              <option value="paid">Paid</option>
-            </select>
-          </div>
-          <div>
-            <Label htmlFor="plan-name">Display name</Label>
-            <Input id="plan-name" value={name} onChange={(e) => setName(e.target.value)} className="mt-1" placeholder="e.g. Growth" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="plan-slug">Slug</Label>
+              <Input id="plan-slug" value={form.slug} onChange={set("slug")} disabled={!!plan} className="mt-1 font-mono" placeholder="e.g. pro" />
+            </div>
+            <div>
+              <Label htmlFor="plan-name">Display name</Label>
+              <Input id="plan-name" value={form.name} onChange={set("name")} className="mt-1" placeholder="e.g. Pro" />
+            </div>
           </div>
           <div>
             <Label htmlFor="plan-billing">Billing type</Label>
-            <select
-              id="plan-billing"
-              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              value={billingType}
-              onChange={(e) => setBillingType(e.target.value as AdminPlan["billing_type"])}
-            >
-              <option value="free">Free</option>
-              <option value="recurring">Recurring</option>
-              <option value="contact">Contact us</option>
+            <select id="plan-billing" className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.billingType} onChange={set("billingType")}>
+              <option value="free">Free (no license key)</option>
+              <option value="recurring">Recurring (Stripe checkout)</option>
+              <option value="contact">Contact us (licenses issued by admin)</option>
             </select>
           </div>
-          {billingType === "recurring" && (
+          {form.billingType === "recurring" && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="plan-monthly">Price / month</Label>
+                  <Input id="plan-monthly" type="number" min={0} step="0.01" value={form.priceMonthly} onChange={set("priceMonthly")} className="mt-1" />
+                </div>
+                <div>
+                  <Label htmlFor="plan-yearly">Price / year</Label>
+                  <Input id="plan-yearly" type="number" min={0} step="0.01" value={form.priceYearly} onChange={set("priceYearly")} className="mt-1" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="plan-stripe-monthly">Stripe price id (monthly)</Label>
+                  <Input id="plan-stripe-monthly" value={form.stripeMonthly} onChange={set("stripeMonthly")} className="mt-1 font-mono text-xs" placeholder="price_…" />
+                </div>
+                <div>
+                  <Label htmlFor="plan-stripe-yearly">Stripe price id (yearly)</Label>
+                  <Input id="plan-stripe-yearly" value={form.stripeYearly} onChange={set("stripeYearly")} className="mt-1 font-mono text-xs" placeholder="price_…" />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">Checkout stays disabled for a billing cycle until its Stripe price id is set.</p>
+            </>
+          )}
+          {paid && (
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="plan-monthly">Price / month</Label>
-                <Input id="plan-monthly" type="number" min={0} value={priceMonthly} onChange={(e) => setPriceMonthly(e.target.value)} className="mt-1" />
+                <Label htmlFor="plan-activations">Sites per license</Label>
+                <Input id="plan-activations" type="number" min={1} value={form.activationLimit} onChange={set("activationLimit")} className="mt-1" />
               </div>
               <div>
-                <Label htmlFor="plan-yearly">Price / year</Label>
-                <Input id="plan-yearly" type="number" min={0} value={priceYearly} onChange={(e) => setPriceYearly(e.target.value)} className="mt-1" />
+                <Label htmlFor="plan-prefix">License key prefix</Label>
+                <Input id="plan-prefix" value={form.keyPrefix} onChange={set("keyPrefix")} maxLength={6} className="mt-1 font-mono uppercase" placeholder="from product initials" />
               </div>
             </div>
           )}
           <div>
-            <Label htmlFor="plan-cta-label">CTA label</Label>
-            <Input id="plan-cta-label" value={ctaLabel} onChange={(e) => setCtaLabel(e.target.value)} className="mt-1" />
+            <Label htmlFor="plan-cta-label">Button label</Label>
+            <Input id="plan-cta-label" value={form.ctaLabel} onChange={set("ctaLabel")} className="mt-1" />
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={() => create.mutate()} disabled={!name || create.isPending}>
-            {create.isPending ? "Adding…" : "Add plan"}
+          <Button onClick={() => save.mutate()} disabled={!form.name || !form.slug || save.isPending}>
+            {save.isPending ? "Saving…" : plan ? "Save plan" : "Add plan"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -224,7 +244,7 @@ function PlansTab({ productId }: { productId: string }) {
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <NewPlanDialog productId={productId} onCreated={invalidate} />
+        <PlanDialog productId={productId} onSaved={invalidate} />
       </div>
       <Card>
         <Table>
@@ -242,7 +262,7 @@ function PlansTab({ productId }: { productId: string }) {
             {plans?.map((p) => (
               <TableRow key={p._id}>
                 <TableCell>{p.name}</TableCell>
-                <TableCell className="capitalize">{p.slug}</TableCell>
+                <TableCell className="font-mono text-xs">{p.slug}</TableCell>
                 <TableCell>{p.price_monthly != null ? `$${p.price_monthly}/mo` : "—"}</TableCell>
                 <TableCell>
                   <Badge variant={p.status === "active" ? "seal" : "secondary"} className="uppercase">
@@ -250,15 +270,18 @@ function PlansTab({ productId }: { productId: string }) {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {p.status === "active" ? (
-                    <Button variant="outline" size="sm" onClick={() => setStatus.mutate({ id: p._id, status: "archived" })}>
-                      Archive
-                    </Button>
-                  ) : (
-                    <Button variant="outline" size="sm" onClick={() => setStatus.mutate({ id: p._id, status: "active" })}>
-                      Activate
-                    </Button>
-                  )}
+                  <div className="flex gap-2">
+                    <PlanDialog productId={productId} plan={p} onSaved={invalidate} />
+                    {p.status === "active" ? (
+                      <Button variant="outline" size="sm" onClick={() => setStatus.mutate({ id: p._id, status: "archived" })}>
+                        Archive
+                      </Button>
+                    ) : (
+                      <Button variant="outline" size="sm" onClick={() => setStatus.mutate({ id: p._id, status: "active" })}>
+                        Activate
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

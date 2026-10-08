@@ -24,7 +24,8 @@ interface Activation {
 interface LicenseWithActivations {
   _id: string;
   license_key: string;
-  plan: "pro" | "business";
+  product?: string;
+  plan: string;
   status: string;
   expires_at: string;
   activation_limit: number;
@@ -42,6 +43,9 @@ export default function LicensesPage() {
     queryKey: ["licenses", "me"],
     queryFn: () => api("/api/licenses/me"),
   });
+
+  const { data: products } = useQuery<{ slug: string; name: string }[]>({ queryKey: ["products"], queryFn: () => api("/api/products") });
+  const productName = (slug = "certificate-generator") => products?.find((p) => p.slug === slug)?.name ?? slug;
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["licenses", "me"] });
 
@@ -111,6 +115,7 @@ export default function LicensesPage() {
           <Card key={license._id}>
             <CardHeader className="flex-row items-center justify-between space-y-0 pb-2">
               <div className="flex items-center gap-2">
+                <span className="font-medium">{productName(license.product)}</span>
                 <Badge className="capitalize">{license.plan}</Badge>
                 <Badge variant={license.status === "active" ? "seal" : "secondary"} className="uppercase">
                   {license.status}

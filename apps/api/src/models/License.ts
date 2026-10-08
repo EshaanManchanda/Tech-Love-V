@@ -1,5 +1,4 @@
 import { Schema, model, Types } from "mongoose";
-import type { PlanSlug } from "../config/plans.js";
 
 export type LicenseStatus = "active" | "expired" | "cancelled" | "suspended";
 
@@ -9,8 +8,8 @@ export interface LicenseDoc {
   user_id: Types.ObjectId;
   organization_id?: Types.ObjectId;
   subscription_id?: Types.ObjectId;
-  product: "certificate-generator" | "dynamic-tags";
-  plan: PlanSlug;
+  product: string; // Product.slug
+  plan: string; // Plan.slug within that product
   status: LicenseStatus;
   activation_limit: number;
   expires_at: string; // "YYYY-MM-DD" — matches the WP plugin's gmdate('Y-m-d') round-trip
@@ -41,8 +40,8 @@ const licenseSchema = new Schema<LicenseDoc>({
   user_id: { type: Schema.Types.ObjectId, ref: "User", required: true },
   organization_id: { type: Schema.Types.ObjectId, ref: "Organization" },
   subscription_id: { type: Schema.Types.ObjectId, ref: "Subscription" },
-  product: { type: String, enum: ["certificate-generator", "dynamic-tags"], default: "certificate-generator", required: true },
-  plan: { type: String, enum: ["pro", "business", "paid"], required: true },
+  product: { type: String, default: "certificate-generator", required: true },
+  plan: { type: String, required: true },
   status: { type: String, enum: ["active", "expired", "cancelled", "suspended"], default: "active" },
   activation_limit: { type: Number, required: true },
   expires_at: { type: String, required: true },

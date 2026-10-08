@@ -2,6 +2,8 @@ import request from "supertest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp } from "../app.js";
 import { License } from "../models/License.js";
+import { Plan } from "../models/Plan.js";
+import { Product } from "../models/Product.js";
 import { Subscription } from "../models/Subscription.js";
 import { User } from "../models/User.js";
 
@@ -10,17 +12,19 @@ vi.mock("../services/stripeClient.js", () => ({
     webhooks: { constructEvent: vi.fn() },
     subscriptions: { retrieve: vi.fn() },
   },
-  planForPriceId: vi.fn(() => "pro"),
 }));
 
-const { stripe, planForPriceId } = await import("../services/stripeClient.js");
+// Legacy env-configured prices — plans without stripe_price_* fields still resolve through these.
+process.env.STRIPE_PRICE_PRO_MONTHLY = "price_pro_monthly";
+
+const { stripe } = await import("../services/stripeClient.js");
 const app = createApp();
 
-function checkoutCompletedEvent(id: string, userId: string) {
+function checkoutCompletedEvent(id: string, userId: string, metadata?: Record<string, string>) {
   return {
     id,
     type: "checkout.session.completed",
-    data: { object: { client_reference_id: userId, subscription: "sub_123", customer: "cus_123" } },
+    data: { object: { client_reference_id: userId, subscription: "sub_123", customer: "cus_123", metadata } },
   };
 }
 
@@ -65,9 +69,8 @@ describe("POST /api/webhooks/stripe", () => {
 
 describe("plan-scoped license key prefixes", () => {
   it("prefixes a Business license key with BIZ-", async () => {
-    vi.mocked(planForPriceId).mockReturnValueOnce("business");
     const user = await User.create({ name: "BizBuyer", email: "bizbuyer@example.com", password_hash: "x", role: "customer" });
-    const event = checkoutCompletedEvent("evt_biz_checkout", user._id.toString());
+    const event = checkoutCompletedEvent("evt_biz_checkout", user._id.toString(), { product: "certificate-generator", plan: "business" });
     vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event as never);
 
     await request(app).post("/api/webhooks/stripe").type("application/json").set("stripe-signature", "test").send("{}");
@@ -79,9 +82,8 @@ describe("plan-scoped license key prefixes", () => {
 
 describe("Dynamic Tags product", () => {
   it("creates a dynamic-tags/paid License with a DT- prefixed key", async () => {
-    vi.mocked(planForPriceId).mockReturnValueOnce("paid");
     const user = await User.create({ name: "DTBuyer", email: "dtbuyer@example.com", password_hash: "x", role: "customer" });
-    const event = checkoutCompletedEvent("evt_dt_checkout", user._id.toString());
+    const event = checkoutCompletedEvent("evt_dt_checkout", user._id.toString(), { product: "dynamic-tags", plan: "paid" });
     vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(event as never);
 
     await request(app).post("/api/webhooks/stripe").type("application/json").set("stripe-signature", "test").send("{}");
@@ -89,6 +91,43 @@ describe("Dynamic Tags product", () => {
     const license = await License.findOne({ user_id: user._id });
     expect(license).toMatchObject({ product: "dynamic-tags", plan: "paid" });
     expect(license!.license_key).toMatch(/^DT-/);
+  });
+});
+
+describe("products created in the admin CMS", () => {
+  it("licenses a new product's plan using the Plan document's price id, limit and key prefix", async () => {
+    const product = await Product.create({ name: "Form Builder", slug: "form-builder" });
+    await Plan.create({
+      product_id: product._id,
+      slug: "agency",
+      name: "Agency",
+      billing_type: "recurring",
+      price_monthly: 9,
+      price_yearly: 90,
+      cert_limit: 0,
+      bulk_cap: 0,
+      activation_limit: 25,
+      stripe_price_monthly: "price_fb_agency_monthly",
+      license_key_prefix: "fba",
+      cta_label: "Subscribe",
+      cta_type: "checkout",
+    });
+    vi.mocked(stripe.subscriptions.retrieve).mockResolvedValueOnce({
+      id: "sub_fb",
+      current_period_start: Math.floor(Date.now() / 1000),
+      current_period_end: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
+      items: { data: [{ price: { id: "price_fb_agency_monthly", recurring: { interval: "month" } } }] },
+    } as never);
+    const user = await User.create({ name: "FBBuyer", email: "fbbuyer@example.com", password_hash: "x", role: "customer" });
+    // No metadata — exercises the price-id reverse lookup against Plan documents.
+    vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(checkoutCompletedEvent("evt_fb_checkout", user._id.toString()) as never);
+
+    await request(app).post("/api/webhooks/stripe").type("application/json").set("stripe-signature", "test").send("{}");
+
+    const license = await License.findOne({ user_id: user._id });
+    expect(license).toMatchObject({ product: "form-builder", plan: "agency", activation_limit: 25 });
+    expect(license!.license_key).toMatch(/^FBA-/);
+    expect(await Subscription.findOne({ provider_subscription_id: "sub_fb" })).toMatchObject({ product: "form-builder", plan: "agency" });
   });
 });
 
