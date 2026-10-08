@@ -31,6 +31,8 @@ import { supportRouter } from "./routes/support.js";
 
 export function createApp() {
   const app = express();
+  // Behind one nginx hop: use X-Forwarded-For so rate limits key on the real client IP.
+  app.set("trust proxy", 1);
 
   // CSP off: this is a JSON API, not an HTML app — the only HTML it serves is
   // swagger-ui at /api/docs, whose inline scripts the default CSP would block.
