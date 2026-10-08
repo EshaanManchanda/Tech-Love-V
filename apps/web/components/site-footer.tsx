@@ -30,6 +30,7 @@ export function SiteFooter() {
             <span className="font-medium text-slate-900">Certificate Generator</span>
             <Link href="/certificate-generator/certificate-management-system" className="text-slate-500 hover:text-slate-900">Features</Link>
             <Link href="/certificate-generator/product-facts" className="text-slate-500 hover:text-slate-900">Product facts</Link>
+            <Link href="/certificate-generator/requirements" className="text-slate-500 hover:text-slate-900">Requirements checklist</Link>
             <Link href="/certificate-generator/compare" className="text-slate-500 hover:text-slate-900">Compare</Link>
             <Link href="/certificate-generator/pricing" className="text-slate-500 hover:text-slate-900">Pricing</Link>
           </div>

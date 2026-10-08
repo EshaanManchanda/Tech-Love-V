@@ -7,7 +7,7 @@ import { PlanCheckoutButton } from "@/components/plan-checkout-button";
 import { ProductPrimaryCta } from "@/components/product-primary-cta";
 import { API_URL } from "@/lib/api";
 import { CONTACT_URL } from "@/lib/plans";
-import { SITE_URL, breadcrumbLd } from "@/lib/site";
+import { OG_IMAGE, SITE_URL, breadcrumbLd } from "@/lib/site";
 
 interface PublicPlan {
   _id: string;
@@ -71,7 +71,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const title = `${product.name} — WordPress Plugin`;
   const description = metaDescription(product);
   const path = `/plugins/${params.slug}`;
-  return { title, description, alternates: { canonical: path }, openGraph: { title, description, url: path } };
+  return { title, description, alternates: { canonical: path }, openGraph: { images: [OG_IMAGE], title, description, url: path } };
 }
 
 export default async function DynamicProductPage({ params }: { params: { slug: string } }) {

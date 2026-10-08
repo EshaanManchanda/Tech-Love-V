@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CONTACT_URL } from "@/lib/plans";
 import { ProductPrimaryCta } from "@/components/product-primary-cta";
+import { YouTubeVideo } from "@/components/youtube-video";
+import type { YouTubeVideo as Video } from "@/lib/site";
 
 export interface ProductContent {
   product_name: string;
@@ -74,6 +76,7 @@ export function ProductLanding({
   featureLinks = {},
   tutorialHref,
   docsHref = "/docs",
+  video,
 }: {
   content: ProductContent;
   pricingHref: string;
@@ -83,6 +86,7 @@ export function ProductLanding({
   featureLinks?: Record<string, string>; // feature id → dedicated feature page
   tutorialHref?: string;
   docsHref?: string;
+  video?: Video; // full tutorial, embedded under the definition block
 }) {
   return (
     <>
@@ -90,7 +94,11 @@ export function ProductLanding({
       <section className="bg-slate-50">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-20 sm:grid-cols-2 sm:py-28">
           <div className="text-center sm:text-left">
-            <h1 className="font-display text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">{content.hero.headline}</h1>
+            {/* Product name inside the H1 so the page's main heading names the entity it's about. */}
+            <h1 className="font-display text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+              <span className="mb-3 block text-base font-semibold uppercase tracking-wider text-brand-600">{content.product_name}</span>
+              {content.hero.headline}
+            </h1>
             <p className="mx-auto mt-4 max-w-xl text-lg text-slate-600 sm:mx-0">{content.hero.subheadline}</p>
             {currentVersion && <p className="mt-2 text-sm text-slate-400">Current version {currentVersion}</p>}
             {tutorialHref && (
@@ -118,6 +126,15 @@ export function ProductLanding({
         <section className="mx-auto max-w-3xl px-4 pt-16 text-center">
           <h2 className="font-display text-2xl font-bold text-slate-900">What is {content.product_name}?</h2>
           <p className="mt-3 text-slate-600">{entitySentence}</p>
+        </section>
+      )}
+
+      {video && (
+        <section className="mx-auto max-w-4xl px-4 pt-12">
+          <h2 className="text-center font-display text-2xl font-bold text-slate-900">Watch the full tutorial</h2>
+          <div className="mt-6">
+            <YouTubeVideo video={video} />
+          </div>
         </section>
       )}
 

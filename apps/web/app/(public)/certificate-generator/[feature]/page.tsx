@@ -5,7 +5,7 @@ import { JsonLd } from "@/components/json-ld";
 import { ProductPrimaryCta } from "@/components/product-primary-cta";
 import { Screenshot } from "@/components/product-landing";
 import { CG_FEATURES, getCgFeature } from "@/lib/cg-features";
-import { breadcrumbLd } from "@/lib/site";
+import { OG_IMAGE, breadcrumbLd } from "@/lib/site";
 
 export const dynamicParams = false; // unknown slugs 404 instead of rendering an empty page
 
@@ -21,7 +21,7 @@ export function generateMetadata({ params }: { params: { feature: string } }): M
     title: f.title,
     description: f.description,
     alternates: { canonical: path },
-    openGraph: { title: f.title, description: f.description, url: path, type: "article" },
+    openGraph: { images: [OG_IMAGE], title: f.title, description: f.description, url: path, type: "article" },
   };
 }
 
@@ -98,7 +98,14 @@ export default function FeaturePage({ params }: { params: { feature: string } })
         </section>
       )}
 
-      <div className="mt-16 flex flex-wrap items-center gap-4 rounded-lg bg-brand-600 px-6 py-8">
+      <p className="mt-12 text-sm text-slate-600">
+        Evaluating options? See the{" "}
+        <Link href="/certificate-generator/requirements" className="font-medium text-brand-600 hover:underline">requirements checklist</Link> or{" "}
+        <Link href="/certificate-generator/compare" className="font-medium text-brand-600 hover:underline">how Certificate Generator compares</Link> with other
+        certificate plugins.
+      </p>
+
+      <div className="mt-8 flex flex-wrap items-center gap-4 rounded-lg bg-brand-600 px-6 py-8">
         <p className="flex-1 font-display text-lg font-bold text-white">Free plan available — no card required.</p>
         <ProductPrimaryCta
           productSlug="certificate-generator"

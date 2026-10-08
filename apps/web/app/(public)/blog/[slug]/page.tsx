@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/json-ld";
 import { BLOG_POSTS, getBlogPost } from "@/lib/blog";
-import { FOUNDER_URL, SITE_URL, breadcrumbLd } from "@/lib/site";
+import { FOUNDER_URL, OG_IMAGE, SITE_URL, breadcrumbLd } from "@/lib/site";
 
 export const dynamicParams = false;
 
@@ -19,7 +19,7 @@ export function generateMetadata({ params }: { params: { slug: string } }): Meta
     title: p.title,
     description: p.description,
     alternates: { canonical: path },
-    openGraph: { title: p.title, description: p.description, url: path, type: "article", publishedTime: p.datePublished },
+    openGraph: { images: [OG_IMAGE], title: p.title, description: p.description, url: path, type: "article", publishedTime: p.datePublished },
   };
 }
 

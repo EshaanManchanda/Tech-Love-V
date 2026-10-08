@@ -98,7 +98,11 @@ export default function ProductFactsPage() {
           </tbody>
         </table>
       </div>
-      <p className="mt-4 text-sm text-slate-500">Live prices and limits: {link("/certificate-generator/pricing", "pricing page")}.</p>
+      <p className="mt-4 text-sm text-slate-500">
+        Live prices and limits: {link("/certificate-generator/pricing", "pricing page")}. See also the{" "}
+        {link("/certificate-generator/requirements", "requirements checklist")} and the{" "}
+        {link("/certificate-generator/compare", "comparison with other certificate plugins")}.
+      </p>
     </main>
   );
 }

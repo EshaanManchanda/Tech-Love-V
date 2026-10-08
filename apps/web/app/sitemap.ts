@@ -16,6 +16,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/certificate-generator/pricing",
     "/certificate-generator/product-facts",
     "/certificate-generator/compare",
+    "/certificate-generator/requirements",
     "/dynamic-tags/pricing",
     ...CG_FEATURES.map((f) => `/certificate-generator/${f.slug}`),
     "/docs",

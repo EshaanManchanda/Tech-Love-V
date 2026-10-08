@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { JsonLd } from "@/components/json-ld";
 import { CG_DOCS, getCgDoc } from "@/lib/cg-docs";
 import { getCgFeature } from "@/lib/cg-features";
-import { YOUTUBE_PLAYLIST, breadcrumbLd } from "@/lib/site";
+import { CG_TUTORIAL, OG_IMAGE, YOUTUBE_PLAYLIST, breadcrumbLd } from "@/lib/site";
+import { YouTubeVideo } from "@/components/youtube-video";
 
 export const dynamicParams = false;
 
@@ -20,7 +21,7 @@ export function generateMetadata({ params }: { params: { topic: string } }): Met
     title: `${d.title} — Certificate Generator Docs`,
     description: d.description,
     alternates: { canonical: path },
-    openGraph: { title: d.title, description: d.description, url: path, type: "article" },
+    openGraph: { images: [OG_IMAGE], title: d.title, description: d.description, url: path, type: "article" },
   };
 }
 
@@ -47,9 +48,12 @@ export default function DocTopicPage({ params }: { params: { topic: string } }) 
       <h1 className="mt-4 font-display text-3xl font-bold text-slate-900">{d.title}</h1>
       <p className="mt-4 text-lg text-slate-700">{d.intro}</p>
       {d.slug === "getting-started" && (
-        <a href={YOUTUBE_PLAYLIST} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block text-sm font-medium text-brand-600 hover:underline">
-          ▶ Prefer video? Watch the tutorial series
-        </a>
+        <div className="mt-8">
+          <YouTubeVideo video={CG_TUTORIAL} />
+          <a href={YOUTUBE_PLAYLIST} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm font-medium text-brand-600 hover:underline">
+            ▶ See the whole tutorial series
+          </a>
+        </div>
       )}
 
       {d.blocks.map((b) => {
