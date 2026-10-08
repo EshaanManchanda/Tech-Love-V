@@ -2,9 +2,9 @@ import bcrypt from "bcryptjs";
 import jwt, { type SignOptions } from "jsonwebtoken";
 
 // Unset in dev (host-only cookie is fine on localhost). In production, set to
-// the parent domain (e.g. ".myimage.fun") so auth cookies set by the API
-// (tlvapi.myimage.fun) are also sent on requests to the web app's own domain
-// (techlovev.myimage.fun) — without this, cookies are host-only to the API's
+// the parent domain (e.g. ".techlovev.in") so auth cookies set by the API
+// (tlvapi.techlovev.in) are also sent on requests to the web app's own domain
+// (techlovev.in) — without this, cookies are host-only to the API's
 // domain and the web app's middleware never sees them.
 export const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
 

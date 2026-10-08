@@ -75,12 +75,11 @@ webhook at `POST /api/webhooks/stripe` for `checkout.session.completed`, `invoic
 
 ## Production
 
-- **Web** (`apps/web`): Vercel, `https://techlovev.myimage.fun`
+- **Web** (`apps/web`): Vercel, `https://techlovev.in`
 - **API** + **worker** (`apps/api`, `apps/worker`): Hostinger VPS via PM2 + Nginx,
-  `https://tlvapi.myimage.fun`
-- DNS for `myimage.fun` is managed in **Cloudflare** (not Hostinger's DNS Zone Editor, despite
-  the VPS being on Hostinger) — see [`DEPLOY-HOSTINGER.md`](DEPLOY-HOSTINGER.md) for the full
-  runbook and a Cloudflare proxy gotcha that breaks both Vercel and Certbot if missed.
+  `https://tlvapi.techlovev.in`
+- DNS for `techlovev.in` is managed in **Hostinger's DNS Zone Editor** — see
+  [`DEPLOY-HOSTINGER.md`](DEPLOY-HOSTINGER.md) for the full runbook.
 
 ## More docs
 

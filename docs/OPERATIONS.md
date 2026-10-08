@@ -2,17 +2,12 @@
 
 ## Production topology
 
-- **Web**: Vercel (`https://techlovev.myimage.fun`) — separate deploy target from the VPS.
+- **Web**: Vercel (`https://techlovev.in`) — separate deploy target from the VPS.
 - **API + worker**: Hostinger VPS, PM2 (`ecosystem.config.js` runs only `api` and `worker` —
   `web` was removed once the frontend moved to Vercel), Nginx reverse-proxying
-  `https://tlvapi.myimage.fun` → `127.0.0.1:4000`.
-- **DNS**: `myimage.fun`'s nameservers are Cloudflare's, *not* Hostinger's — Hostinger's own DNS
-  Zone Editor has no effect even though the VPS is hosted there. Manage records in the
-  Cloudflare dashboard instead.
-  - **Both `tlvapi` and `techlovev` records must be DNS-only (grey cloud), not proxied
-    (orange cloud).** A proxied `techlovev` breaks Vercel's edge routing (shows as "Proxy
-    Detected" in the Vercel dashboard). A proxied `tlvapi` still lets Certbot issue a cert
-    (Let's Encrypt validates externally) but is unnecessary indirection for a plain API origin.
+  `https://tlvapi.techlovev.in` → `127.0.0.1:4000`.
+- **DNS**: `techlovev.in` uses Hostinger's nameservers — manage records in hPanel's DNS Zone
+  Editor. Apex `techlovev.in` → Vercel (`76.76.21.21`), `tlvapi` → the VPS IP.
 - **MongoDB**: Atlas — the VPS's outbound IP must be in Atlas's Network Access allowlist, or
   every request fails with `MongooseServerSelectionError` / `ReplicaSetNoPrimary` (api stays
   "online" in `pm2 status` but 502s at Nginx since it can't actually serve requests).
