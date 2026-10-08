@@ -415,7 +415,7 @@ Full breakdown (pricing, exact caps, license-key format): [`PLAN-COMPARISON.md`]
 
 | Plan | Price | Monthly certs | Bulk import/export cap | Notable extras |
 |---|---|---|---|---|
-| **Free** | $0 | 100/mo | 250 students/teachers/schools, 6 templates | Verification, Analytics, Serial Numbers, Search shortcode all included |
+| **Free** | $0 | 250/mo (250 emails/mo) | 500 students/teachers/schools, 10 templates | Verification, Analytics, Serial Numbers, Search shortcode all included |
 | **Pro** | $3.5/mo or $35/yr | 1,000/mo | Unlimited | + Bulk ZIP download, Email templates, REST API, SMTP diagnostics, Priority support |
 | **Business** | Full access — [contact us](https://eshaanportfolio.vercel.app/contact) | Unlimited | Unlimited | + 19,000+ font library, Unlimited API calls, Multisite support |
 

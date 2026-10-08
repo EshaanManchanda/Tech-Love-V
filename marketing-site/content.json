@@ -133,7 +133,7 @@
     },
     {
       "title": "Transparent, usage-based pricing",
-      "detail": "Free tier covers real usage (100 certs/month, 250 records per entity, no license key needed). Pro is $3.5/month ($35/year) for unlimited bulk operations and the REST API — not a quote-only enterprise wall."
+      "detail": "Free tier covers real usage (250 certs/month, 250 certificate emails/month, 500 records per entity, no license key needed). Pro is $3.5/month ($35/year) for unlimited bulk operations and the REST API — not a quote-only enterprise wall."
     }
   ],
   "comparison": {
@@ -200,7 +200,7 @@
     {
       "name": "Free",
       "price": "$0",
-      "highlight": "100 certs/month, 250 records/entity, 6 templates — verification, LMS auto-issuance, and badges included, no license key needed",
+      "highlight": "250 certs/month, 250 emails/month, 500 records/entity, 10 templates — verification, LMS auto-issuance, and badges included, no license key needed",
       "cta_label": "Get started free",
       "cta_type": "register"
     },

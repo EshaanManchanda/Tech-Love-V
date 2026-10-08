@@ -1,40 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import { API_URL } from "@/lib/api";
-import { PLUGIN_CATALOG, type PluginCatalogEntry } from "@/lib/plugin-catalog";
+import { getCatalog } from "@/lib/plugin-catalog";
 
 export const metadata: Metadata = {
-  title: "All Plugins — Tech Love V",
+  alternates: { canonical: "/plugins" },
+  title: "All Plugins",
   description: "Every WordPress plugin published by Tech Love V, by Eshaan Manchanda.",
 };
 
-// The two original plugins keep their curated PLUGIN_CATALOG entry (custom
-// tagline/accent color); anything created later via the admin Products CMS
-// shows up here automatically from the DB with a generic accent.
-async function getDbOnlyProducts(): Promise<PluginCatalogEntry[]> {
-  const knownSlugs = new Set(PLUGIN_CATALOG.map((p) => p.slug));
-  try {
-    const res = await fetch(`${API_URL}/api/products`, { next: { revalidate: 60 } });
-    if (!res.ok) return [];
-    const products: { slug: string; name: string; tagline?: string }[] = await res.json();
-    return products
-      .filter((p) => !knownSlugs.has(p.slug))
-      .map((p) => ({
-        slug: p.slug,
-        name: p.name,
-        tagline: p.tagline ?? "",
-        startingPrice: "",
-        href: `/plugins/${p.slug}`,
-        accent: "border-t-slate-400",
-      }));
-  } catch {
-    return []; // API unreachable (e.g. during a build with no API running) — the two static plugins still render fine
-  }
-}
-
 export default async function PluginsPage() {
-  const catalog = [...PLUGIN_CATALOG, ...(await getDbOnlyProducts())];
+  const catalog = await getCatalog();
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-16">

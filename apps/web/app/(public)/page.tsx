@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
-import { PLUGIN_CATALOG } from "@/lib/plugin-catalog";
+import { getCatalog } from "@/lib/plugin-catalog";
 import cgContent from "../../../../marketing-site/content.json";
 import dtContent from "../../../../marketing-site/content.dynamic-tags.json";
 
 export const metadata: Metadata = {
-  title: "Tech Love V",
+  alternates: { canonical: "/" },
+  title: { absolute: "Tech Love V — WordPress plugins by Eshaan Manchanda" },
   description: "Tech Love V by Eshaan Manchanda — WordPress plugins with a real license management system behind them.",
 };
 
@@ -44,7 +45,8 @@ const useCases = [
   },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const catalog = await getCatalog();
   return (
     <>
       {/* Hero */}
@@ -69,7 +71,7 @@ export default function Home() {
       <section className="mx-auto max-w-5xl px-4 py-20">
         <h2 className="text-center font-display text-2xl font-bold text-slate-900">Our plugins</h2>
         <div className="mt-10 grid gap-6 sm:grid-cols-2">
-          {PLUGIN_CATALOG.map((plugin) => (
+          {catalog.map((plugin) => (
             <Link key={plugin.slug} href={plugin.href}>
               <Card className={`h-full overflow-hidden border-t-4 ${plugin.accent} transition-shadow hover:shadow-lg`}>
                 <CardContent className="pt-6">

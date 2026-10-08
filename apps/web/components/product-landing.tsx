@@ -32,7 +32,7 @@ function hasScreenshot(file: string) {
   return fs.existsSync(path.join(process.cwd(), "public/marketing", file));
 }
 
-function Screenshot({ file, alt }: { file: string; alt: string }) {
+export function Screenshot({ file, alt }: { file: string; alt: string }) {
   const exists = hasScreenshot(file);
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -70,11 +70,19 @@ export function ProductLanding({
   pricingHref,
   productSlug,
   currentVersion,
+  entitySentence,
+  featureLinks = {},
+  tutorialHref,
+  docsHref = "/docs",
 }: {
   content: ProductContent;
   pricingHref: string;
   productSlug: string;
   currentVersion?: string | null;
+  entitySentence?: string;
+  featureLinks?: Record<string, string>; // feature id → dedicated feature page
+  tutorialHref?: string;
+  docsHref?: string;
 }) {
   return (
     <>
@@ -85,6 +93,11 @@ export function ProductLanding({
             <h1 className="font-display text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">{content.hero.headline}</h1>
             <p className="mx-auto mt-4 max-w-xl text-lg text-slate-600 sm:mx-0">{content.hero.subheadline}</p>
             {currentVersion && <p className="mt-2 text-sm text-slate-400">Current version {currentVersion}</p>}
+            {tutorialHref && (
+              <a href={tutorialHref} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-sm font-medium text-brand-600 hover:underline">
+                ▶ Watch the video tutorial series
+              </a>
+            )}
             <div className="mt-8 flex justify-center gap-4 sm:justify-start">
               <ProductPrimaryCta
                 productSlug={productSlug}
@@ -99,6 +112,14 @@ export function ProductLanding({
           <Screenshot file={content.hero.screenshot_ref} alt={`${content.product_name} dashboard`} />
         </div>
       </section>
+
+      {/* 1b. Plain-language definition — the sentence search engines and AI answers quote */}
+      {entitySentence && (
+        <section className="mx-auto max-w-3xl px-4 pt-16 text-center">
+          <h2 className="font-display text-2xl font-bold text-slate-900">What is {content.product_name}?</h2>
+          <p className="mt-3 text-slate-600">{entitySentence}</p>
+        </section>
+      )}
 
       {/* 2. Time-saved stat band */}
       <section className="border-y border-slate-200 bg-brand-600">
@@ -143,6 +164,11 @@ export function ProductLanding({
                 <h3 className="font-display text-lg font-semibold text-slate-900">{f.title}</h3>
                 <p className="mt-2 font-medium text-slate-700">{f.pitch}</p>
                 <p className="mt-2 text-sm text-slate-600">{f.detail}</p>
+                {featureLinks[f.id] && (
+                  <Link href={featureLinks[f.id]} className="mt-3 inline-block text-sm font-medium text-brand-600 hover:underline">
+                    Learn more →
+                  </Link>
+                )}
               </CardContent>
             </Card>
           ))}
@@ -261,7 +287,7 @@ export function ProductLanding({
               registerLabel={content.hero.primary_cta}
               className="inline-block rounded-md bg-white px-6 py-3 text-sm font-medium text-brand-700 hover:bg-brand-50"
             />
-            <Link href="/docs" className="inline-block rounded-md bg-brand-700/40 px-6 py-3 text-sm font-medium text-white ring-1 ring-white/40 hover:bg-brand-700/60">
+            <Link href={docsHref} className="inline-block rounded-md bg-brand-700/40 px-6 py-3 text-sm font-medium text-white ring-1 ring-white/40 hover:bg-brand-700/60">
               Read documentation
             </Link>
           </div>

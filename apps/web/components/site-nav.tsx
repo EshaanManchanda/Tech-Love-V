@@ -8,6 +8,7 @@ const links = [
   { href: "/", label: "Home" },
   { href: "/plugins", label: "Plugins" },
   { href: "/docs", label: "Docs" },
+  { href: "/blog", label: "Blog" },
 ];
 
 export function SiteNav() {
