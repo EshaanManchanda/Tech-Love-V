@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -25,7 +25,6 @@ export default function LoginPage() {
 }
 
 function LoginForm() {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const [formError, setFormError] = useState<string>();
@@ -41,7 +40,11 @@ function LoginForm() {
     try {
       const user = await api<CurrentUser>("/api/auth/login", { method: "POST", body: JSON.stringify(values) });
       queryClient.setQueryData(["me"], user);
-      router.push(searchParams.get("next") ?? "/dashboard");
+      // Full navigation, not router.push: the client router may still hold the
+      // pre-login "redirect to /login" response for this route, which would
+      // bounce straight back here. Only same-site paths — never "//evil.com".
+      const next = searchParams.get("next");
+      window.location.assign(next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard");
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : "Something went wrong.");
     }
