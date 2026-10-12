@@ -40,13 +40,29 @@ function refreshSecret(): string {
   return requireSecret("JWT_REFRESH_SECRET", "test-refresh-secret");
 }
 
+// Its own key, so a plugin download link can never pass verifyAccessToken.
+function downloadSecret(): string {
+  return `${accessSecret()}:plugin-download`;
+}
+
+/** Signed Pro package link for one license on one site — handed to WordPress by /api/payments/update-check. */
+export function signDownloadToken(licenseId: string, siteUrl: string): string {
+  return jwt.sign({ lic: licenseId, site: siteUrl }, downloadSecret(), { expiresIn: "2d" });
+}
+
+export function verifyDownloadToken(token: string): { lic: string; site: string } {
+  return jwt.verify(token, downloadSecret()) as { lic: string; site: string };
+}
+
+// Set-password tokens share accessSecret(), so a login token says what it is and
+// verifyAccessToken accepts nothing else.
 export function signAccessToken(payload: AccessTokenPayload): string {
-  return jwt.sign(payload, accessSecret(), { expiresIn: "15m" });
+  return jwt.sign({ ...payload, purpose: "access" }, accessSecret(), { expiresIn: "15m" });
 }
 
 /** Deliberately short-lived (5m) and no matching refresh token — an impersonation session expires on its own. */
 export function signImpersonationToken(payload: AccessTokenPayload): string {
-  return jwt.sign(payload, accessSecret(), { expiresIn: "5m" });
+  return jwt.sign({ ...payload, purpose: "access" }, accessSecret(), { expiresIn: "5m" });
 }
 
 export function signRefreshToken(userId: string): string {
@@ -54,7 +70,9 @@ export function signRefreshToken(userId: string): string {
 }
 
 export function verifyAccessToken(token: string): AccessTokenPayload {
-  return jwt.verify(token, accessSecret()) as AccessTokenPayload;
+  const payload = jwt.verify(token, accessSecret()) as AccessTokenPayload & { purpose?: string };
+  if (payload.purpose !== "access") throw new Error("Not an access token.");
+  return payload;
 }
 
 export function verifyRefreshToken(token: string): { sub: string } {
