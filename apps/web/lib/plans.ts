@@ -1,6 +1,6 @@
 // Loading-state fallback only — the live source of truth is now the
 // GET /api/plans/compare endpoint (backed by the Plan/Feature/PlanFeature
-// collections, seeded from CG_License_Manager::get_plan_features()). Keep
+// collections, seeded by apps/api/src/scripts/seed-plans.ts). Keep
 // this in sync as a sane default for the instant before that request resolves.
 
 export type WebPlanSlug = "free" | "pro" | "business";
@@ -13,8 +13,8 @@ export interface PlanCopy {
   priceMonthly: number | null;
   priceYearly: number | null;
   priceNote?: string; // e.g. "Contact for pricing"
-  certLimit: string; // "250/mo" | "1,000/mo" | "Unlimited"
-  bulkCap: string; // "500 rows" | "Unlimited"
+  certLimit: string; // "Unlimited" on every plan since the free plugin dropped its caps (7.6)
+  bulkCap: string;
   cta: { label: string; type: "checkout" | "contact" | "register" };
   highlight?: boolean;
 }
@@ -25,16 +25,16 @@ export const PLANS: PlanCopy[] = [
     label: "Free",
     priceMonthly: 0,
     priceYearly: 0,
-    certLimit: "250/mo",
-    bulkCap: "500 rows",
-    cta: { label: "Get started free", type: "register" },
+    certLimit: "Unlimited",
+    bulkCap: "Unlimited",
+    cta: { label: "Download free", type: "register" },
   },
   {
     slug: "pro",
     label: "Pro",
     priceMonthly: 3.5,
     priceYearly: 35,
-    certLimit: "1,000/mo",
+    certLimit: "Unlimited",
     bulkCap: "Unlimited",
     cta: { label: "Subscribe", type: "checkout" },
     highlight: true,
@@ -60,30 +60,31 @@ export interface FeatureRow {
 }
 
 export const FEATURES: FeatureRow[] = [
-  { key: "basic_pdf", label: "PDF certificate generation", free: true, pro: true, business: true },
-  { key: "manual_issue", label: "Manual certificate issuing", free: true, pro: true, business: true },
-  { key: "lms_integrations", label: "Tutor LMS, LearnDash, LifterLMS, Sensei LMS and WooCommerce", free: true, pro: true, business: true },
-  { key: "track_certificates", label: 'Multi-course "track" certificates', free: true, pro: true, business: true },
-  { key: "verification", label: "QR code verification ([cg_verify_certificate])", free: true, pro: true, business: true },
-  { key: "revocation", label: "Certificate revocation (shown as revoked on verify)", free: true, pro: true, business: true },
-  { key: "linkedin", label: 'LinkedIn "Add to Profile" button', free: true, pro: true, business: true },
-  { key: "search_shortcode", label: "Search shortcodes ([student_search], [teacher_search], [school_search])", free: true, pro: true, business: true },
-  { key: "analytics", label: "Certificate analytics dashboard", free: true, pro: true, business: true },
-  { key: "getting_started", label: "Getting Started checklist", free: true, pro: true, business: true },
-  { key: "admin_bulk_actions", label: "Bulk edit, bulk email and event filtering on admin lists", free: true, pro: true, business: true },
-  { key: "bulk_send_filters", label: "Bulk Send filters (event, import source) + recipient preflight", free: true, pro: true, business: true },
-  { key: "events", label: "Events management", free: true, pro: true, business: true },
-  { key: "bulk_import", label: "CSV bulk import/export", free: "Capped", pro: true, business: true },
-  { key: "email_sending", label: "Certificate email & bulk send", free: "250/mo", pro: true, business: true },
-  { key: "bulk_zip", label: "Bulk ZIP download", free: false, pro: true, business: true },
-  { key: "email_templates", label: "Email templates", free: false, pro: true, business: true },
-  { key: "api_access", label: "REST API", free: false, pro: true, business: true },
-  { key: "smtp_tools", label: "SMTP diagnostics", free: false, pro: true, business: true },
-  { key: "renewal_reminders", label: "Renewal reminders", free: false, pro: true, business: true },
+  // Free plugin — the complete certificate tool, nothing capped or locked
+  { key: "basic_pdf", label: "PDF generation, manual issue, 27 built-in fonts", free: true, pro: true, business: true },
+  { key: "unicode_names", label: "Names in any language (Indian scripts, Urdu / Arabic, Cyrillic, …)", free: true, pro: true, business: true },
+  { key: "template_builder", label: "Drag-and-drop templates: per-field fonts, custom-text fields with {field} tags", free: true, pro: true, business: true },
+  { key: "badges_signatures", label: "Digital badges, image / e-signature fields", free: true, pro: true, business: true },
+  { key: "bulk_import", label: "Students, teachers, schools: CSV import & export", free: "No row limit", pro: true, business: true },
+  { key: "import_check", label: "Import check before saving: column mapping, encoding / delimiter detection, sample CSVs", free: true, pro: true, business: true },
+  { key: "email_sending", label: "Certificate email, bulk send and background queue", free: "No monthly limit", pro: true, business: true },
+  { key: "email_templates", label: "Email templates (placeholders, CC/BCC) and SMTP / Sender.net / Mandrill", free: true, pro: true, business: true },
+  { key: "renewal_reminders", label: "Recipient renewal reminders", free: true, pro: true, business: true },
+  { key: "verification", label: "QR verification page with unguessable codes, LinkedIn / X / WhatsApp sharing", free: true, pro: true, business: true },
+  { key: "revocation", label: "Certificate history, revoke / reinstate, reissue (issued certificates keep their layout)", free: true, pro: true, business: true },
+  { key: "search_shortcode", label: "Student / teacher / school search and My Certificates shortcodes", free: true, pro: true, business: true },
+  { key: "bulk_zip", label: "Bulk certificate ZIP download (admin)", free: true, pro: true, business: true },
+  { key: "analytics", label: "Analytics, email logs, serial numbers", free: true, pro: true, business: true },
+  { key: "privacy_tools", label: "WordPress privacy export / erase", free: true, pro: true, business: true },
+  // Pro add-on
+  { key: "lms_integrations", label: "Auto-issue from Tutor LMS, LearnDash, LifterLMS, Sensei LMS, LearnPress", free: false, pro: true, business: true },
+  { key: "woocommerce", label: "Auto-issue on WooCommerce order completion", free: false, pro: true, business: true },
+  { key: "past_completions", label: '"Issue to past completions" backfill', free: false, pro: true, business: true },
+  { key: "custom_font_upload", label: "Custom font upload (.ttf)", free: false, pro: true, business: true },
+  { key: "api_access", label: "REST API (issue certificates, look up by email)", free: false, pro: true, business: true },
+  { key: "school_zip_shortcode", label: "School bulk ZIP shortcode [school_bulk_certificate_download]", free: false, pro: true, business: true },
   { key: "priority_support", label: "Priority support", free: false, pro: true, business: true },
-  { key: "custom_font_upload", label: "Custom font upload", free: false, pro: false, business: true },
-  { key: "unlimited_api", label: "Unlimited API calls", free: false, pro: false, business: true },
-  { key: "multisite", label: "Multisite", free: false, pro: false, business: true },
+  { key: "sites", label: "Sites per license key", free: "Unlimited (no key)", pro: "1", business: "5" },
 ];
 
 export const CONTACT_URL = "https://eshaanportfolio.vercel.app/contact";

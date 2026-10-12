@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/docs" },
 };
 
-const badges = ["Version 7.5", "WordPress 6.0+", "PHP 8.0+", "GPL-2.0+"];
+const badges = ["Version 7.8", "WordPress 6.0+", "PHP 8.2+", "GPL-2.0+"];
 
 const features = [
   "Certificate templates — drag-position fields, per-field font/size/colour",
@@ -33,7 +33,7 @@ const faqs = [
   { q: "Can I use a Gmail account to send emails?", a: "Yes, but Gmail requires an App Password. In WP Mail SMTP, choose Gmail as the mailer, use smtp.gmail.com on port 587, and your App Password." },
   { q: "How do I change the certificate PDF design?", a: "Edit the template — upload a new background and reposition fields. Future PDFs use the new design; already-generated PDFs are unchanged." },
   { q: "Can students verify their certificate online?", a: "Yes — every certificate's QR code links to a public verification page, and visitors can also search by serial number or email." },
-  { q: "Is the plugin multisite compatible?", a: "Partially — designed for single-site use. Network-wide activation requires the Business plan; Free/Pro network-activated installs track usage per site independently." },
+  { q: "Is the plugin multisite compatible?", a: "It's designed for single-site use. The free plugin works on any number of sites; a Pro license activates 1 site and Business up to 5." },
 ];
 
 export default function DocsPage() {

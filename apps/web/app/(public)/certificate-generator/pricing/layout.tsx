@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Certificate Generator Pricing — Free, Pro & Business",
   description:
-    "Certificate Generator for WordPress: Free plan with 250 certificates/month, Pro at $3.5/month ($35/year) with unlimited bulk import and REST API, Business for unlimited certificates and multisite.",
+    "Certificate Generator for WordPress: the free plugin is unlimited — certificates, emails and CSV imports, no account needed. Pro add-on at $3.5/month ($35/year) adds LMS & WooCommerce auto-issue, REST API and custom fonts. Business for up to 5 sites.",
   alternates: { canonical: "/certificate-generator/pricing" },
 };
 

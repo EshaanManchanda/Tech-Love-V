@@ -44,6 +44,7 @@ interface AdminPlan {
 interface AdminVersion {
   _id: string;
   version: string;
+  edition?: "free" | "pro";
   changelog?: string;
   zip_filename: string;
   file_size: number;
@@ -295,12 +296,14 @@ function PlansTab({ productId }: { productId: string }) {
 function UploadVersionDialog({ productId, onUploaded }: { productId: string; onUploaded: () => void }) {
   const [open, setOpen] = useState(false);
   const [version, setVersion] = useState("");
+  const [edition, setEdition] = useState<"free" | "pro">("free");
   const [changelog, setChangelog] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isCurrent, setIsCurrent] = useState(true);
 
   const reset = () => {
     setVersion("");
+    setEdition("free");
     setChangelog("");
     setFile(null);
     setIsCurrent(true);
@@ -310,6 +313,7 @@ function UploadVersionDialog({ productId, onUploaded }: { productId: string; onU
     mutationFn: () => {
       const formData = new FormData();
       formData.set("version", version);
+      formData.set("edition", edition);
       formData.set("changelog", changelog);
       formData.set("is_current", String(isCurrent));
       formData.set("file", file!);
@@ -339,6 +343,18 @@ function UploadVersionDialog({ productId, onUploaded }: { productId: string; onU
             <Input id="version-label" value={version} onChange={(e) => setVersion(e.target.value)} className="mt-1" placeholder="e.g. 7.6.0" />
           </div>
           <div>
+            <Label htmlFor="version-edition">Edition</Label>
+            <select
+              id="version-edition"
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              value={edition}
+              onChange={(e) => setEdition(e.target.value as "free" | "pro")}
+            >
+              <option value="free">Free (public download)</option>
+              <option value="pro">Pro (licensed customers only)</option>
+            </select>
+          </div>
+          <div>
             <Label htmlFor="version-changelog">Changelog</Label>
             <textarea
               id="version-changelog"
@@ -360,7 +376,7 @@ function UploadVersionDialog({ productId, onUploaded }: { productId: string; onU
           </div>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={isCurrent} onChange={(e) => setIsCurrent(e.target.checked)} />
-            Make this the current download
+            Make this the current {edition === "pro" ? "Pro" : "Free"} download
           </label>
         </div>
         <DialogFooter>
@@ -407,7 +423,11 @@ function VersionsTab({ productId }: { productId: string }) {
             {versions?.map((v) => (
               <TableRow key={v._id}>
                 <TableCell className="font-mono text-xs">
-                  {v.version} {v.is_current && <Badge variant="seal" className="ml-2">current</Badge>}
+                  {v.version}{" "}
+                  <Badge variant="secondary" className="ml-2 uppercase">
+                    {v.edition ?? "free"}
+                  </Badge>{" "}
+                  {v.is_current && <Badge variant="seal" className="ml-2">current</Badge>}
                 </TableCell>
                 <TableCell className="max-w-xs truncate text-muted-foreground">{v.changelog}</TableCell>
                 <TableCell>{(v.file_size / 1024 / 1024).toFixed(1)} MB</TableCell>

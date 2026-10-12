@@ -54,7 +54,7 @@ export const COMPARED: ComparedProduct[] = [
       serial: "Configurable serial format (e.g. PREFIX-2026-00142); search by serial or email; public /verify/{serial} endpoint.",
       events: "Events management; filter admin lists and Bulk Send by event or import source; bulk edit and bulk email. All plans.",
       analytics: "Certificates issued, emails sent/failed/pending, volume over time, breakdown by type and school, expiry reports, email logs. All plans.",
-      wordpress: "Native plugin. Auto-issues from Tutor LMS, LearnDash, LifterLMS, Sensei LMS and WooCommerce. Search/verify shortcodes. REST API on Pro.",
+      wordpress: "Native plugin. Search/verify shortcodes in Free. Pro add-on auto-issues from Tutor LMS, LearnDash, LifterLMS, Sensei LMS, LearnPress and WooCommerce, plus a REST API.",
       localwp: "Tested on LocalWP, with a setup guide. Public QR verification needs a live site.",
       pricing: "Free; Pro $3.5/month or $35/year; Business: contact.",
       setup: "Install the plugin ZIP, follow the 5-step Getting Started checklist. Needs SMTP for email delivery.",

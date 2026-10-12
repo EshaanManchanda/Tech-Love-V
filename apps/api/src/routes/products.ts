@@ -10,8 +10,9 @@ function publicShape(product: {
   slug: string;
   description?: string;
   tagline?: string;
-  versions?: { version: string; is_current: boolean }[];
+  versions?: { version: string; edition?: "free" | "pro"; is_current: boolean }[];
 }) {
+  const current = (edition: "free" | "pro") => product.versions?.find((v) => v.is_current && (v.edition ?? "free") === edition)?.version ?? null;
   return {
     _id: product._id,
     name: product.name,
@@ -20,7 +21,8 @@ function publicShape(product: {
     tagline: product.tagline,
     // .lean() skips schema-default hydration — a product saved before `versions`
     // existed has the field missing entirely, not defaulted to [].
-    current_version: product.versions?.find((v) => v.is_current)?.version ?? null,
+    current_version: current("free"),
+    pro_version: current("pro"),
   };
 }
 

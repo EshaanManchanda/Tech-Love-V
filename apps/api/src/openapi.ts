@@ -244,8 +244,8 @@ export const openApiSpec = {
       },
     },
 
-    "/api/downloads/plugin/info": { get: { summary: "Current plugin version metadata", tags: ["Downloads"], security: [cookieAuth], responses: { "200": { description: "OK" } } } },
-    "/api/downloads/plugin": { get: { summary: "Download the plugin .zip", tags: ["Downloads"], security: [cookieAuth], responses: { "200": { description: "File stream" } } } },
+    "/api/downloads/plugin/info": { get: { summary: "Current plugin version metadata", tags: ["Downloads"], parameters: [{ name: "product", in: "query", schema: { type: "string", default: "certificate-generator" } }, { name: "edition", in: "query", schema: { type: "string", enum: ["free", "pro"], default: "free" }, description: "free is public; pro needs login + an active Pro/Business license" }], responses: { "200": { description: "OK" }, "401": { description: "Pro: login required" }, "403": { description: "Pro: no active Pro license" } } } },
+    "/api/downloads/plugin": { get: { summary: "Download the plugin .zip (free edition is public)", tags: ["Downloads"], parameters: [{ name: "product", in: "query", schema: { type: "string", default: "certificate-generator" } }, { name: "edition", in: "query", schema: { type: "string", enum: ["free", "pro"], default: "free" }, description: "free is public; pro needs login + an active Pro/Business license" }], responses: { "200": { description: "File stream" }, "401": { description: "Pro: login required" }, "403": { description: "Pro: no active Pro license" } } } },
 
     "/api/api-keys": {
       get: { summary: "List the caller's API keys (hash never returned)", tags: ["API Keys"], security: [cookieAuth], responses: { "200": { description: "OK" } } },

@@ -10,7 +10,7 @@ const TITLE = "Certificate Generator — Certificate Management System for WordP
 // Factual, keyword-bearing summary (what it is + what it does) rather than the hero tagline —
 // this is the snippet search results and AI answers most often show.
 const DESCRIPTION =
-  "WordPress certificate plugin: design templates, bulk-issue PDF certificates from CSV or your LMS, and verify them by QR code and serial number. Free plan.";
+  "WordPress certificate plugin: design templates, bulk-issue PDF certificates from CSV, email and verify them by QR code. Free and unlimited; Pro adds LMS and WooCommerce auto-issue.";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/plugins/certificate-generator" },

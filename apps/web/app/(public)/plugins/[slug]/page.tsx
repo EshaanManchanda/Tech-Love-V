@@ -156,7 +156,7 @@ export default async function DynamicProductPage({ params }: { params: { slug: s
                         {plan.cta_label}
                       </a>
                     ) : (
-                      <Link href="/register" className={buttonClass}>
+                      <Link href={`/register?download=${product.slug}`} className={buttonClass}>
                         {plan.cta_label}
                       </Link>
                     )}

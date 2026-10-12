@@ -18,13 +18,12 @@ interface PlanCompareResponse {
 type Cycle = "monthly" | "yearly";
 
 const faqs = [
-  { q: "Is Free really free forever?", a: "Yes — $0/mo, no card required. Register and start issuing certificates right away." },
-  { q: "What happens when I reach my monthly certificate limit?", a: "It resets automatically on the 1st of each month. Usage is tracked and shown as a meter on the plugin's License tab." },
-  { q: "How many sites can one license activate?", a: "Pro activates 1 site; Business activates up to 5. Deactivate a site from your dashboard to free up a slot." },
-  { q: "Can I cancel or change my plan anytime?", a: "Yes — use Manage Billing on your dashboard to open the Stripe billing portal and update or cancel your subscription." },
-  { q: "Do the bulk import/export caps still apply after I upgrade?", a: "No — the row caps (500 students/teachers/schools, 10 templates) only apply on the Free plan. Pro and Business are unlimited." },
-  { q: "What happens when I hit the Free email limit?", a: "Free sends up to 250 certificate emails a month. Past that, queued emails wait and send automatically on the 1st — or right away once you upgrade. Pro and Business have no email cap." },
-  { q: "How do I activate my license key?", a: "Go to Settings → License in the plugin and paste the key you receive after checkout." },
+  { q: "Is the free plugin really unlimited?", a: "Yes. The free Certificate Generator has no caps on certificates, emails, CSV imports or templates, needs no license key and never contacts our license server. You can download it without an account." },
+  { q: "What does Pro add?", a: "Pro is a small add-on plugin installed next to the free one. It auto-issues certificates from Tutor LMS, LearnDash, LifterLMS, Sensei LMS, LearnPress and WooCommerce (including past completions), and adds the REST API, custom .ttf font upload, the school bulk ZIP shortcode and priority support." },
+  { q: "Do I need the free plugin to use Pro?", a: "Yes. Install and activate Certificate Generator (free) first, then upload the Pro add-on from your dashboard's Downloads page and activate your license key under Settings → License." },
+  { q: "How many sites can one license activate?", a: "Pro activates 1 site; Business activates up to 5. Deactivate a site from your dashboard to free up a slot. The free plugin works on any number of sites." },
+  { q: "Can I cancel or change my plan anytime?", a: "Yes. Use Manage Billing on your dashboard to open the Stripe billing portal and update or cancel your subscription. If Pro lapses, the free plugin keeps working with all your certificates." },
+  { q: "Monthly or yearly?", a: "Pro is $3.5/month or $35/year — the yearly plan is two months free." },
 ];
 
 function cell(value: boolean | string) {
@@ -99,13 +98,13 @@ export default function PricingPage() {
             <span className="inline-block rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">Free forever</span>
             <h2 className="mt-3 text-lg font-semibold">{free.label}</h2>
             <p className="mt-2 text-3xl font-bold">$0</p>
-            <p className="mt-4 text-sm text-slate-600">No license key needed.</p>
+            <p className="mt-4 text-sm text-slate-600">No account or license key needed.</p>
             <ul className="mt-2 space-y-1 text-sm text-slate-600">
-              <li>{free.certLimit} certificates, reset on the 1st</li>
-              <li>250 certificate emails/mo, including bulk send</li>
-              <li>Bulk CSV import/export capped at 500 students, 500 teachers, 500 schools and 10 templates</li>
+              <li>Unlimited certificates, emails and CSV imports</li>
+              <li>Drag-and-drop templates, any-language names, badges and e-signatures</li>
+              <li>QR verification, revoke / reissue, bulk ZIP download</li>
             </ul>
-            <a href="/register">
+            <a href="/register?download=certificate-generator">
               <Button className="mt-6 w-full bg-slate-100 text-slate-900 hover:bg-slate-200">{free.cta.label}</Button>
             </a>
           </CardContent>
@@ -120,7 +119,12 @@ export default function PricingPage() {
               ${cycle === "monthly" ? pro.priceMonthly : pro.priceYearly}
               <span className="text-base font-normal text-slate-500">/{cycle === "monthly" ? "mo" : "yr"}</span>
             </p>
-            <p className="mt-4 text-sm text-slate-600">{pro.certLimit} certificates, {pro.bulkCap} bulk import.</p>
+            <p className="mt-4 text-sm text-slate-600">Everything in Free, plus:</p>
+            <ul className="mt-2 space-y-1 text-sm text-slate-600">
+              <li>Auto-issue from Tutor LMS, LearnDash, LifterLMS, Sensei, LearnPress and WooCommerce</li>
+              <li>REST API and custom font upload</li>
+              <li>1 site · priority support</li>
+            </ul>
             <Button onClick={subscribePro} disabled={loading} className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700">
               {loading ? "Redirecting…" : pro.cta.label}
             </Button>
@@ -133,7 +137,7 @@ export default function PricingPage() {
             <span className="inline-block rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-medium text-rose-700">Custom</span>
             <h2 className="mt-3 text-lg font-semibold">{business.label}</h2>
             <p className="mt-2 text-2xl font-bold">{business.priceNote}</p>
-            <p className="mt-4 text-sm text-slate-600">{business.certLimit} certificates, {business.bulkCap} bulk import.</p>
+            <p className="mt-4 text-sm text-slate-600">Everything in Pro on up to 5 sites, with custom terms for agencies and institutions.</p>
             <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer">
               <Button className="mt-6 w-full bg-slate-100 text-slate-900 hover:bg-slate-200">{business.cta.label}</Button>
             </a>
@@ -152,18 +156,6 @@ export default function PricingPage() {
             </tr>
           </thead>
           <tbody>
-            <tr className="border-b">
-              <td className="py-2 font-medium text-slate-900">Monthly certificate limit</td>
-              <td className="py-2 text-center">{free.certLimit}</td>
-              <td className="py-2 text-center">{pro.certLimit}</td>
-              <td className="py-2 text-center">{business.certLimit}</td>
-            </tr>
-            <tr className="border-b">
-              <td className="py-2 font-medium text-slate-900">Bulk import/export cap</td>
-              <td className="py-2 text-center">{free.bulkCap}</td>
-              <td className="py-2 text-center">{pro.bulkCap}</td>
-              <td className="py-2 text-center">{business.bulkCap}</td>
-            </tr>
             {features.map((f) => (
               <tr key={f.key} className="border-b last:border-0">
                 <td className="py-2 text-slate-900">{f.label}</td>

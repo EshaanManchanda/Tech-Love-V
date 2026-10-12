@@ -2,9 +2,10 @@
  * Seeds Product/Plan/Feature/PlanFeature — the DB-driven source of truth for the
  * marketing site's pricing/comparison display. Idempotent (upserts by slug/key).
  *
- * The feature matrix mirrors the plugin's actual
- * CG_License_Manager::get_plan_features() (includes/Core/license-manager.php)
- * 1:1, so the website and the plugin's own License tab never drift apart.
+ * The feature matrix mirrors the plugins' own doc/guide/PLAN-COMPARISON.md:
+ * the free plugin is complete and uncapped; the Pro add-on
+ * (certificate-generator-pro, CG_License_Manager::get_plan_features()) adds
+ * the integrations below. Business = Pro features + more sites.
  *
  * Usage: npx tsx src/scripts/seed-plans.ts
  */
@@ -16,35 +17,31 @@ import { Feature } from "../models/Feature.js";
 import { PlanFeature } from "../models/PlanFeature.js";
 
 const FEATURE_MATRIX: { key: string; label: string; free: boolean; pro: boolean; business: boolean; note?: Partial<Record<MarketingPlanSlug, string>> }[] = [
-  // Certificates
-  { key: "basic_pdf", label: "PDF certificate generation", free: true, pro: true, business: true },
-  { key: "manual_issue", label: "Manual certificate issuing", free: true, pro: true, business: true },
-  { key: "lms_integrations", label: "Tutor LMS, LearnDash, LifterLMS, Sensei LMS and WooCommerce", free: true, pro: true, business: true },
-  { key: "track_certificates", label: 'Multi-course "track" certificates', free: true, pro: true, business: true },
-  // Verification and public pages
-  { key: "verification", label: "QR code verification ([cg_verify_certificate])", free: true, pro: true, business: true },
-  { key: "revocation", label: "Certificate revocation (shown as revoked on verify)", free: true, pro: true, business: true },
-  { key: "linkedin", label: 'LinkedIn "Add to Profile" button', free: true, pro: true, business: true },
-  { key: "search_shortcode", label: "Search shortcodes ([student_search], [teacher_search], [school_search])", free: true, pro: true, business: true },
-  // Admin tools
-  { key: "analytics", label: "Certificate analytics dashboard", free: true, pro: true, business: true },
-  { key: "getting_started", label: "Getting Started checklist", free: true, pro: true, business: true },
-  { key: "admin_bulk_actions", label: "Bulk edit, bulk email and event filtering on admin lists", free: true, pro: true, business: true },
-  { key: "bulk_send_filters", label: "Bulk Send filters (event, import source) + recipient preflight", free: true, pro: true, business: true },
-  { key: "events", label: "Events management", free: true, pro: true, business: true },
-  { key: "bulk_import", label: "CSV bulk import/export", free: true, pro: true, business: true, note: { free: "Capped" } },
-  { key: "email_sending", label: "Certificate email & bulk send", free: true, pro: true, business: true, note: { free: "250/mo" } },
-  // Pro
-  { key: "bulk_zip", label: "Bulk ZIP download", free: false, pro: true, business: true },
-  { key: "email_templates", label: "Email templates", free: false, pro: true, business: true },
-  { key: "api_access", label: "REST API", free: false, pro: true, business: true },
-  { key: "smtp_tools", label: "SMTP diagnostics", free: false, pro: true, business: true },
-  { key: "renewal_reminders", label: "Renewal reminders", free: false, pro: true, business: true },
+  // Free plugin — the complete certificate tool, nothing capped or locked
+  { key: "basic_pdf", label: "PDF generation, manual issue, 27 built-in fonts", free: true, pro: true, business: true },
+  { key: "unicode_names", label: "Names in any language (Indian scripts, Urdu / Arabic, Cyrillic, …)", free: true, pro: true, business: true },
+  { key: "template_builder", label: "Drag-and-drop templates: per-field fonts, custom-text fields with {field} tags", free: true, pro: true, business: true },
+  { key: "badges_signatures", label: "Digital badges, image / e-signature fields", free: true, pro: true, business: true },
+  { key: "bulk_import", label: "Students, teachers, schools: CSV import & export", free: true, pro: true, business: true, note: { free: "No row limit" } },
+  { key: "import_check", label: "Import check before saving: column mapping, encoding / delimiter detection, sample CSVs", free: true, pro: true, business: true },
+  { key: "email_sending", label: "Certificate email, bulk send and background queue", free: true, pro: true, business: true, note: { free: "No monthly limit" } },
+  { key: "email_templates", label: "Email templates (placeholders, CC/BCC) and SMTP / Sender.net / Mandrill", free: true, pro: true, business: true },
+  { key: "renewal_reminders", label: "Recipient renewal reminders", free: true, pro: true, business: true },
+  { key: "verification", label: "QR verification page with unguessable codes, LinkedIn / X / WhatsApp sharing", free: true, pro: true, business: true },
+  { key: "revocation", label: "Certificate history, revoke / reinstate, reissue (issued certificates keep their layout)", free: true, pro: true, business: true },
+  { key: "search_shortcode", label: "Student / teacher / school search and My Certificates shortcodes", free: true, pro: true, business: true },
+  { key: "bulk_zip", label: "Bulk certificate ZIP download (admin)", free: true, pro: true, business: true },
+  { key: "analytics", label: "Analytics, email logs, serial numbers", free: true, pro: true, business: true },
+  { key: "privacy_tools", label: "WordPress privacy export / erase", free: true, pro: true, business: true },
+  // Pro add-on
+  { key: "lms_integrations", label: "Auto-issue from Tutor LMS, LearnDash, LifterLMS, Sensei LMS, LearnPress", free: false, pro: true, business: true },
+  { key: "woocommerce", label: "Auto-issue on WooCommerce order completion", free: false, pro: true, business: true },
+  { key: "past_completions", label: '"Issue to past completions" backfill', free: false, pro: true, business: true },
+  { key: "custom_font_upload", label: "Custom font upload (.ttf)", free: false, pro: true, business: true },
+  { key: "api_access", label: "REST API (issue certificates, look up by email)", free: false, pro: true, business: true },
+  { key: "school_zip_shortcode", label: "School bulk ZIP shortcode [school_bulk_certificate_download]", free: false, pro: true, business: true },
   { key: "priority_support", label: "Priority support", free: false, pro: true, business: true },
-  // Business
-  { key: "custom_font_upload", label: "Custom font upload", free: false, pro: false, business: true },
-  { key: "unlimited_api", label: "Unlimited API calls", free: false, pro: false, business: true },
-  { key: "multisite", label: "Multisite", free: false, pro: false, business: true },
+  { key: "sites", label: "Sites per license key", free: true, pro: true, business: true, note: { free: "Unlimited (no key)", pro: "1", business: "5" } },
 ];
 
 const PLANS: Omit<import("../models/Plan.js").PlanDoc, "_id" | "product_id">[] = [
@@ -55,10 +52,10 @@ const PLANS: Omit<import("../models/Plan.js").PlanDoc, "_id" | "product_id">[] =
     price_monthly: 0,
     price_yearly: 0,
     currency: "usd",
-    cert_limit: 250,
-    bulk_cap: 500,
+    cert_limit: 0, // 0 = unlimited — the free plugin has no caps since 7.6
+    bulk_cap: 0,
     activation_limit: 0,
-    cta_label: "Get started free",
+    cta_label: "Download free",
     cta_type: "register",
     highlighted: false,
     sort_order: 1,
@@ -71,7 +68,7 @@ const PLANS: Omit<import("../models/Plan.js").PlanDoc, "_id" | "product_id">[] =
     price_monthly: 3.5,
     price_yearly: 35,
     currency: "usd",
-    cert_limit: 1000,
+    cert_limit: 0,
     bulk_cap: 0,
     activation_limit: 1,
     cta_label: "Subscribe",
@@ -165,7 +162,14 @@ const DT_FEATURE_MATRIX: { key: string; label: string; free: boolean; paid: bool
 async function seedCertificateGenerator() {
   const product = await Product.findOneAndUpdate(
     { slug: "certificate-generator" },
-    { name: "Certificate Generator", slug: "certificate-generator", status: "active" },
+    {
+      name: "Certificate Generator",
+      slug: "certificate-generator",
+      status: "active",
+      tagline: "Free, unlimited PDF certificates with bulk CSV import, email and QR verification. Pro adds LMS and WooCommerce auto-issue.",
+      description:
+        "Certificate Generator designs, issues, emails and verifies PDF certificates in bulk from WordPress — with no caps on certificates, emails or imports. The Pro add-on auto-issues certificates from Tutor LMS, LearnDash, LifterLMS, Sensei, LearnPress and WooCommerce, and adds a REST API and custom font upload.",
+    },
     { upsert: true, new: true },
   );
 

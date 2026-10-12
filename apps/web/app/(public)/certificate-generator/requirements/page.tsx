@@ -25,7 +25,7 @@ const requirements: { need: string; how: string; href: string; evidence: string 
   },
   {
     need: "Import students from CSV",
-    how: "Bulk Import with columns student_name, email, school_name, certificate_type, issue_date. Free: up to 500 students, teachers and schools; Pro: unlimited.",
+    how: "Bulk Import with columns student_name, email, school_name, certificate_type, issue_date. No row limits on any plan, including Free.",
     href: "/docs/certificate-generator/import-students-csv",
     evidence: "CSV import guide",
   },
@@ -91,7 +91,7 @@ const requirements: { need: string; how: string; href: string; evidence: string 
   },
   {
     need: "Schools, colleges, training institutes, course creators, coaching centres and event organisers",
-    how: "Separate student, teacher and school records; events; LMS auto-issuance for online courses.",
+    how: "Separate student, teacher and school records; events; LMS auto-issuance for online courses with the Pro add-on.",
     href: "/blog/certificate-system-for-schools-and-training-institutes",
     evidence: "Certificates for schools and institutes",
   },

@@ -1,7 +1,7 @@
 {
   "meta": {
     "purpose": "Content source for the public marketing page: features, why-choose-us, and competitor comparison for Certificate Generator.",
-    "plugin_version": "7.5",
+    "plugin_version": "7.8 (free) / Pro add-on 1.1",
     "last_updated": "2026-09-21"
   },
   "product_name": "Certificate Generator",
@@ -37,8 +37,8 @@
   },
   "hero": {
     "headline": "Certificates, badges, and verification — without leaving WordPress",
-    "subheadline": "Design once, issue automatically from your LMS or WooCommerce store, and let anyone verify authenticity in one click. No external PDF service, no per-certificate fees.",
-    "primary_cta": "Get Certificate Generator",
+    "subheadline": "Free and unlimited: design once, bulk-issue from CSV, email and let anyone verify in one click. Add Pro to auto-issue from your LMS or WooCommerce store. No external PDF service, no per-certificate fees.",
+    "primary_cta": "Download free",
     "secondary_cta": "See it in action",
     "screenshot_ref": "create-template-in-plugin.png"
   },
@@ -47,35 +47,35 @@
       "id": "templates",
       "title": "Drag-and-drop certificate designer",
       "pitch": "Upload any background image and position every field exactly where you want it — no CSS, no design tool, no exporting from Canva.",
-      "detail": "Place Name, Type, School, Date, plus up to 15 custom fields per certificate type. Live canvas preview with zoom and grid snapping shows exactly what recipients will get.",
+      "detail": "Per-field fonts, sizes and colours, custom-text fields with {field} tags, image and e-signature fields, 27 built-in fonts. Preview with a real record before you issue — and issued certificates keep their layout even if you edit the template later.",
       "screenshot_ref": "template-editor-field-mapping.png"
     },
     {
       "id": "pdf-engine",
-      "title": "Instant, self-contained PDF generation",
+      "title": "Names in any language, rendered on your server",
       "pitch": "Certificates render in-house via a bundled PDF engine — nothing to install, nothing calling out to a third-party API.",
-      "detail": "No TCPDF or mPDF setup, no server dependency headaches, no rate-limited external rendering service.",
+      "detail": "Latin names render instantly; Indian scripts, Urdu / Arabic, Cyrillic and other non-Latin names switch automatically to a bundled Unicode engine with the right fonts. No server setup, no rate-limited rendering service.",
       "screenshot_ref": "final-certificate-pdf.png"
     },
     {
       "id": "qr-verification",
       "title": "Built-in QR code verification",
       "pitch": "Every certificate is fraud-checkable the moment it's issued — automatically, with zero configuration.",
-      "detail": "Each PDF embeds a QR code linking to a public verification page. Anyone can confirm authenticity by serial number or email, no login required.",
+      "detail": "Each PDF embeds a QR code (generated on your own server) linking to a public verification page with a 12-character unguessable code. Recipients can share to LinkedIn, X or WhatsApp; revoked or reissued certificates show their real status.",
       "screenshot_ref": "verification-page.png"
     },
     {
       "id": "auto-issuance",
-      "title": "Automatic issuance from your LMS or store",
+      "title": "Automatic issuance from your LMS or store (Pro)",
       "pitch": "Stop generating certificates by hand. Completion triggers the certificate.",
-      "detail": "Works with Tutor LMS, LearnDash, LifterLMS, Sensei, and WooCommerce order completion — including multi-course 'track' certificates that require several courses finished first.",
+      "detail": "The Pro add-on works with Tutor LMS, LearnDash, LifterLMS, Sensei (including tracks), LearnPress and WooCommerce order completion — and can issue certificates for everyone who completed before you installed it.",
       "screenshot_ref": "lms-integration-settings.png"
     },
     {
       "id": "bulk-tools",
       "title": "Bulk import, bulk send, bulk everything",
-      "pitch": "Onboard a thousand students in one CSV upload, then email their certificates in a single click.",
-      "detail": "Filter sends by school, certificate type, or import source. A background queue handles delivery with automatic ZIP bundling, configurable rate limits, and retry with backoff — so a big send never times out or floods your SMTP provider.",
+      "pitch": "Onboard a thousand students in one CSV upload, then email their certificates in a single click — free, with no row or email limits.",
+      "detail": "An import check maps columns, detects delimiter and encoding and flags problems before anything is saved (sample CSVs included). A background queue handles delivery over wp_mail, SMTP, Sender.net or Mandrill with rate limits and retries, plus admin ZIP downloads of every certificate.",
       "screenshot_ref": "bulk-send-queue.png"
     },
     {
@@ -96,19 +96,19 @@
       "id": "public-search",
       "title": "Self-serve lookup for students, teachers, and schools",
       "pitch": "Recipients find their own certificates — support tickets go down.",
-      "detail": "Drop-in shortcodes ([student_search], [teacher_search], [school_search]) let anyone look up their certificate by email, with an 'Add to LinkedIn' button on results.",
+      "detail": "Drop-in shortcodes for student, teacher and school search plus a My Certificates page let recipients find and download their own certificates, with LinkedIn sharing on results.",
       "screenshot_ref": "search-shortcode-frontend.png"
     },
     {
       "id": "rest-api",
-      "title": "REST API for custom integrations",
+      "title": "REST API for custom integrations (Pro)",
       "pitch": "Issue certificates from any system that can make an HTTP call.",
-      "detail": "certificate-generator/v1 namespace: issue certificates, validate an API key, look up by email, and a public no-auth serial verification endpoint.",
+      "detail": "certificate-generator/v1 namespace: issue certificates, look up by email, validate an API key — plus a public no-auth serial verification endpoint in the free plugin.",
       "screenshot_ref": "rest-api-docs.png"
     },
     {
       "id": "custom-fonts",
-      "title": "Custom font upload",
+      "title": "Custom font upload (Pro)",
       "pitch": "Match your organization's brand exactly, down to the typeface.",
       "detail": "Upload a .ttf and it renders correctly via a dedicated font engine — selectable on any template.",
       "screenshot_ref": "custom-font-upload.png"
@@ -129,11 +129,11 @@
     },
     {
       "title": "Automation, not busywork",
-      "detail": "Connects directly to the LMS or store you already run. A finished course or a completed order issues the certificate — nobody has to remember to do it manually."
+      "detail": "Connects directly to the LMS or store you already run (Pro add-on). A finished course or a completed order issues the certificate — nobody has to remember to do it manually."
     },
     {
-      "title": "Transparent, usage-based pricing",
-      "detail": "Free tier covers real usage (250 certs/month, 250 certificate emails/month, 500 records per entity, no license key needed). Pro is $3.5/month ($35/year) for unlimited bulk operations and the REST API — not a quote-only enterprise wall."
+      "title": "A genuinely free plugin, simple Pro pricing",
+      "detail": "The free plugin has no caps on certificates, emails, imports or templates, no license key and no account required. Pro is $3.5/month ($35/year) for LMS and WooCommerce auto-issue, the REST API and custom fonts — not a quote-only enterprise wall."
     }
   ],
   "comparison": {
@@ -151,12 +151,12 @@
       ],
       [
         "QR verification page",
-        "Included on every plan, public, no login",
+        "Included free, public, no login",
         "Usually a paid add-on or missing entirely"
       ],
       [
         "LMS auto-issuance",
-        "Tutor LMS, LearnDash, LifterLMS, Sensei, WooCommerce",
+        "Pro: Tutor LMS, LearnDash, LifterLMS, Sensei, LearnPress, WooCommerce",
         "Usually locked to one LMS or not supported"
       ],
       [
@@ -166,7 +166,7 @@
       ],
       [
         "Multi-course 'track' certificates",
-        "Included",
+        "Pro (Sensei tracks)",
         "Not commonly available"
       ],
       [
@@ -176,22 +176,22 @@
       ],
       [
         "Custom font upload",
-        "Business plan",
+        "Pro",
         "Rare, often unsupported"
       ],
       [
         "REST API",
-        "Pro/Business",
+        "Pro",
         "Usually absent"
       ],
       [
-        "Free tier verification limit",
-        "Unlimited, always free",
+        "Free plugin limits",
+        "None — unlimited certificates, emails and imports",
         "Often gated behind a paid tier"
       ],
       [
         "Pricing model",
-        "$3.5/mo Pro, transparent tiers",
+        "Free plugin + $3.5/mo Pro add-on",
         "Often $50-150/yr flat or quote-only"
       ]
     ]
@@ -200,14 +200,14 @@
     {
       "name": "Free",
       "price": "$0",
-      "highlight": "250 certs/month, 250 emails/month, 500 records/entity, 10 templates — verification, LMS auto-issuance, and badges included, no license key needed",
-      "cta_label": "Get started free",
+      "highlight": "The complete plugin, unlimited: certificates, emails, CSV imports and templates. Drag-and-drop designer, any-language names, QR verification, badges, revoke / reissue, bulk ZIP. No account or license key needed.",
+      "cta_label": "Download free",
       "cta_type": "register"
     },
     {
       "name": "Pro",
       "price": "$3.5/mo",
-      "highlight": "1,000 certs/month, unlimited bulk, ZIP download, REST API, email templates, SMTP diagnostics, renewal reminders — or $35/year",
+      "highlight": "Everything in Free plus auto-issue from Tutor LMS, LearnDash, LifterLMS, Sensei, LearnPress and WooCommerce, past-completion backfill, REST API, custom font upload, priority support — or $35/year",
       "cta_label": "Subscribe",
       "cta_type": "checkout",
       "highlighted": true
@@ -215,7 +215,7 @@
     {
       "name": "Business",
       "price": "Contact us",
-      "highlight": "Unlimited certs, custom font upload (.ttf), unlimited API calls, multisite network activation",
+      "highlight": "Everything in Pro on up to 5 sites, with custom terms for agencies and institutions",
       "cta_label": "Contact us",
       "cta_type": "contact"
     }

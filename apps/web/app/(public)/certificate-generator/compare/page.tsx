@@ -48,7 +48,7 @@ const differences = [
   },
   {
     title: "CSV and LMS, together",
-    detail: "Import from CSV and auto-issue from Tutor LMS, LearnDash, LifterLMS, Sensei or WooCommerce — including multi-course track certificates.",
+    detail: "Import from CSV for free, and auto-issue from Tutor LMS, LearnDash, LifterLMS, Sensei, LearnPress or WooCommerce with Pro.",
     href: "/certificate-generator/lms-certificate-automation",
   },
   {
@@ -58,7 +58,7 @@ const differences = [
   },
   {
     title: "Verification, events and analytics on the Free plan",
-    detail: "None of these are paid add-ons; Pro is $3.5/month for unlimited bulk operations and the REST API.",
+    detail: "None of these are paid add-ons, and Free has no certificate, email or import limits; Pro is $3.5/month for LMS/WooCommerce auto-issue and the REST API.",
     href: "/certificate-generator/pricing",
   },
 ];

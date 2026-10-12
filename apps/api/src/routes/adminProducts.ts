@@ -199,7 +199,7 @@ adminProductsRouter.get("/:id/versions", async (req, res) => {
 });
 
 adminProductsRouter.post("/:id/versions", uploadZip, async (req, res) => {
-  const parsed = z.object({ version: z.string().min(1), changelog: z.string().optional(), is_current: z.string().optional() }).safeParse(req.body);
+  const parsed = z.object({ version: z.string().min(1), edition: z.enum(["free", "pro"]).default("free"), changelog: z.string().optional(), is_current: z.string().optional() }).safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: { code: "INVALID_INPUT", message: parsed.error.issues[0].message } });
   if (!req.file) return res.status(400).json({ error: { code: "INVALID_INPUT", message: "A .zip file is required." } });
 
@@ -214,10 +214,12 @@ adminProductsRouter.post("/:id/versions", uploadZip, async (req, res) => {
 
   const isCurrent = parsed.data.is_current !== "false"; // default true — a freshly uploaded version is usually meant to go live
   if (isCurrent) {
-    for (const v of product.versions) v.is_current = false;
+    // Versions uploaded before `edition` existed have it unset — treat as free.
+    for (const v of product.versions) if ((v.edition ?? "free") === parsed.data.edition) v.is_current = false;
   }
   product.versions.push({
     version: parsed.data.version,
+    edition: parsed.data.edition,
     changelog: parsed.data.changelog,
     zip_filename: req.file.originalname,
     zip_path: zipPath,
@@ -232,7 +234,7 @@ adminProductsRouter.post("/:id/versions", uploadZip, async (req, res) => {
     action: "product.version.upload",
     resource: "Product",
     resourceId: product._id.toString(),
-    after: { version: parsed.data.version, is_current: isCurrent },
+    after: { version: parsed.data.version, edition: parsed.data.edition, is_current: isCurrent },
     ip: req.ip,
   });
   res.status(201).json(product.versions[product.versions.length - 1]);
@@ -245,7 +247,8 @@ adminProductsRouter.patch("/:id/versions/:versionId/set-current", async (req, re
   const target = product.versions.find((v) => v._id.toString() === req.params.versionId);
   if (!target) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Version not found." } });
 
-  for (const v of product.versions) v.is_current = false;
+  const edition = target.edition ?? "free";
+  for (const v of product.versions) if ((v.edition ?? "free") === edition) v.is_current = false;
   target.is_current = true;
   await product.save();
 

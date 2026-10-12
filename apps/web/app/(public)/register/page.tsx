@@ -6,7 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { api, ApiError } from "@/lib/api";
+import { api, API_URL, ApiError } from "@/lib/api";
+import { PLUGIN_CATALOG } from "@/lib/plugin-catalog";
 import type { CurrentUser } from "@/lib/useUser";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,6 +30,13 @@ function RegisterForm() {
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const [formError, setFormError] = useState<string>();
+  // ?download=<product slug>: the visitor came from a "Get it free" button. The free
+  // edition is a public download, so registering is optional — offer a skip link.
+  const downloadSlug = searchParams.get("download");
+  const download = downloadSlug && /^[a-z0-9-]+$/.test(downloadSlug) ? downloadSlug : null;
+  const downloadName = PLUGIN_CATALOG.find((p) => p.slug === download)?.name ?? "the plugin";
+  const next = searchParams.get("next");
+  const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : null;
 
   const {
     register,
@@ -41,7 +49,9 @@ function RegisterForm() {
     try {
       const user = await api<CurrentUser>("/api/auth/register", { method: "POST", body: JSON.stringify(values) });
       queryClient.setQueryData(["me"], user);
-      router.push(searchParams.get("next") ?? "/dashboard");
+      // Only same-site paths — never "//evil.com". The Downloads page starts the
+      // file itself, so the download isn't cut off by this navigation.
+      router.push(download ? `/dashboard/downloads?autostart=${download}` : (safeNext ?? "/dashboard"));
     } catch (err) {
       setFormError(err instanceof ApiError ? err.message : "Something went wrong.");
     }
@@ -51,7 +61,16 @@ function RegisterForm() {
     <main className="mx-auto flex min-h-screen max-w-sm items-center px-4">
       <Card className="w-full">
         <CardContent className="pt-6">
-          <h1 className="mb-6 font-display text-xl font-semibold">Create an account</h1>
+          {download ? (
+            <>
+              <h1 className="font-display text-xl font-semibold">Get {downloadName} Free</h1>
+              <p className="mb-6 mt-1 text-sm text-neutral-600">
+                Create a free account to keep your downloads and licenses in one dashboard — or skip it and download now.
+              </p>
+            </>
+          ) : (
+            <h1 className="mb-6 font-display text-xl font-semibold">Create an account</h1>
+          )}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <Input placeholder="Name" {...register("name")} />
@@ -70,8 +89,18 @@ function RegisterForm() {
               {isSubmitting ? "Creating account…" : "Create account"}
             </Button>
           </form>
+          {download && (
+            <a
+              href={`${API_URL}/api/downloads/plugin?product=${download}&edition=free`}
+              className="mt-3 block w-full rounded-md border border-neutral-300 px-4 py-2 text-center text-sm font-medium hover:bg-neutral-50"
+            >
+              Skip registration – download Free now
+            </a>
+          )}
           <p className="mt-4 text-sm text-neutral-600">
-            Already have an account? <a href="/login" className="underline">Log in</a>
+            Already have an account? <a href={safeNext ? `/login?next=${encodeURIComponent(safeNext)}` : "/login"} className="underline">
+              Log in
+            </a>
           </p>
         </CardContent>
       </Card>

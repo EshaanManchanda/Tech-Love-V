@@ -88,7 +88,7 @@ export default function DynamicTagsPricingPage() {
             <h2 className="mt-3 text-lg font-semibold">{free.label}</h2>
             <p className="mt-2 text-3xl font-bold">$0</p>
             <p className="mt-4 text-sm text-slate-600">Up to 15 dynamic tags, no license key needed.</p>
-            <a href="/register">
+            <a href="/register?download=dynamic-tags">
               <Button className="mt-6 w-full bg-slate-100 text-slate-900 hover:bg-slate-200">{free.cta.label}</Button>
             </a>
           </CardContent>

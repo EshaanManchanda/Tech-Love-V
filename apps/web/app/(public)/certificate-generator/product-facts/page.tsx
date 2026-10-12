@@ -22,20 +22,20 @@ const facts: [string, React.ReactNode][] = [
   ["Product name", "Certificate Generator"],
   ["Product category", "Certificate management system"],
   ["Platform", "WordPress plugin"],
-  ["Requirements", "WordPress 6.0+, PHP 8.0+"],
+  ["Requirements", "WordPress 6.0+, PHP 8.2+"],
   ["License", "GPL-2.0+"],
   ["Developer", link("/", "Tech Love V (Eshaan Manchanda)")],
   ["Primary purpose", "Create, manage, issue and verify certificates"],
   ["Recipient types", link("/certificate-generator/student-management", "Students, teachers and schools")],
   ["Bulk import", link("/certificate-generator/bulk-certificate-generation", "CSV import and export")],
-  ["Certificate output", "PDF, rendered on your own server (bundled FPDF engine)"],
-  ["Templates", link("/certificate-generator/certificate-templates", "Drag-and-drop designer, up to 15 custom fields per type")],
+  ["Certificate output", "PDF, rendered on your own server (bundled FPDF, with mPDF for non-Latin names)"],
+  ["Templates", link("/certificate-generator/certificate-templates", "Drag-and-drop designer, per-field fonts, custom-text fields")],
   ["Verification", link("/certificate-generator/certificate-verification", "QR code, serial number and email lookup — public, no login")],
   ["Serial numbers", link("/certificate-generator/certificate-serial-numbers", "Automatic, configurable format")],
   ["Events", link("/certificate-generator/certificate-events", "Yes")],
   ["Analytics", link("/certificate-generator/certificate-analytics", "Yes, with email delivery logs")],
-  ["LMS integrations", link("/certificate-generator/lms-certificate-automation", "Tutor LMS, LearnDash, LifterLMS, Sensei LMS, WooCommerce")],
-  ["REST API", link("/docs/certificate-generator/rest-api", "Yes (Pro and Business)")],
+  ["LMS integrations", link("/certificate-generator/lms-certificate-automation", "Pro add-on: Tutor LMS, LearnDash, LifterLMS, Sensei LMS, LearnPress, WooCommerce")],
+  ["REST API", link("/docs/certificate-generator/rest-api", "Yes (Pro add-on)")],
   ["Local development", link("/docs/certificate-generator/localwp", "Works on LocalWP")],
 ];
 
@@ -81,12 +81,6 @@ export default function ProductFactsPage() {
             </tr>
           </thead>
           <tbody>
-            <tr className="border-b">
-              <td className="py-2 text-slate-900">Certificates per month</td>
-              {PLANS.map((p) => (
-                <td key={p.slug} className="py-2 text-slate-600">{p.certLimit}</td>
-              ))}
-            </tr>
             {FEATURES.map((f) => (
               <tr key={f.key} className="border-b last:border-0">
                 <td className="py-2 text-slate-900">{f.label}</td>

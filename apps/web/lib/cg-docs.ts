@@ -41,7 +41,7 @@ export const CG_DOCS: CgDoc[] = [
       {
         h2: "Automatic issuance from your LMS",
         paragraphs: [
-          "If you run Tutor LMS, LearnDash, LifterLMS, Sensei LMS or WooCommerce, certificates can be issued automatically on course or order completion instead of by bulk send.",
+          "With the Pro add-on installed, certificates can be issued automatically on Tutor LMS, LearnDash, LifterLMS, Sensei LMS or LearnPress course completion, or WooCommerce order completion, instead of by bulk send.",
         ],
       },
     ],
@@ -51,7 +51,7 @@ export const CG_DOCS: CgDoc[] = [
     slug: "installation",
     title: "Installing Certificate Generator",
     description: "How to install and activate the Certificate Generator WordPress plugin, and migrate data from older installs.",
-    intro: "Certificate Generator needs WordPress 6.0+ and PHP 8.0+. Activation creates the plugin's own database tables.",
+    intro: "Certificate Generator needs WordPress 6.0+ and PHP 8.2+. Activation creates the plugin's own database tables.",
     blocks: [
       {
         h2: "Install and activate",
@@ -72,7 +72,7 @@ export const CG_DOCS: CgDoc[] = [
       },
       {
         h2: "Activating a license",
-        paragraphs: ["The Free plan needs no license key. For Pro or Business, go to Settings → License in the plugin and paste the key you receive after checkout."],
+        paragraphs: ["The free plugin needs no license key. For Pro or Business, download the Pro add-on from your dashboard, install it alongside the free plugin, then go to Settings → License and paste the key you receive after checkout."],
       },
     ],
   },
@@ -103,7 +103,7 @@ export const CG_DOCS: CgDoc[] = [
       },
       {
         h2: "Custom fonts",
-        paragraphs: ["On the Business plan you can upload a .ttf font (a script font for names, for example) and select it for any field."],
+        paragraphs: ["With Pro you can upload a .ttf font (a script font for names, for example) and select it for any field."],
       },
     ],
     feature: "certificate-templates",
@@ -140,7 +140,7 @@ export const CG_DOCS: CgDoc[] = [
       },
       {
         h2: "Limits",
-        paragraphs: ["The Free plan imports and exports up to 500 students, 500 teachers, 500 schools and 10 templates. Pro and Business have no row caps."],
+        paragraphs: ["There are no import or export limits on any plan, including Free."],
       },
       {
         h2: "Export",
@@ -313,7 +313,7 @@ export const CG_DOCS: CgDoc[] = [
         paragraphs: [
           "Defaults are 60 emails/hour and 10 emails/minute, configurable under Settings → Rate Limits.",
           "A failed email is retried up to 3 times with exponential backoff, then marked failed in Email Logs. Failed items can be reset from the queue management section.",
-          "On the Free plan, up to 250 certificate emails are sent per month; further queued emails send automatically on the 1st, or immediately after upgrading.",
+          "There is no monthly email limit on any plan.",
         ],
       },
     ],
@@ -350,7 +350,7 @@ export const CG_DOCS: CgDoc[] = [
     slug: "rest-api",
     title: "REST API",
     description: "Certificate Generator REST API (namespace certificate-generator/v1): issue certificates, validate keys, look up certificates by email, and verify serials.",
-    intro: "Namespace certificate-generator/v1. Endpoints need a bearer token unless noted. The REST API is available on Pro and Business.",
+    intro: "Namespace certificate-generator/v1. Endpoints need a bearer token unless noted. The REST API is part of the Pro add-on (Pro and Business). The public serial verification endpoint works in the free plugin.",
     blocks: [
       {
         h2: "Endpoints",

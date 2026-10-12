@@ -61,8 +61,8 @@ export function Screenshot({ file, alt }: { file: string; alt: string }) {
   );
 }
 
-function planHref(plan: ProductContent["plans_summary"][number], pricingHref: string) {
-  if (plan.cta_type === "register") return "/register";
+function planHref(plan: ProductContent["plans_summary"][number], pricingHref: string, productSlug: string) {
+  if (plan.cta_type === "register") return `/register?download=${productSlug}`;
   if (plan.cta_type === "contact") return CONTACT_URL;
   return pricingHref;
 }
@@ -271,7 +271,7 @@ export function ProductLanding({
                   <p className="mt-2 text-3xl font-bold text-slate-900">{plan.price}</p>
                   <p className="mt-4 text-sm text-slate-600">{plan.highlight}</p>
                   <a
-                    href={planHref(plan, pricingHref)}
+                    href={planHref(plan, pricingHref, productSlug)}
                     target={plan.cta_type === "contact" ? "_blank" : undefined}
                     rel={plan.cta_type === "contact" ? "noopener noreferrer" : undefined}
                   >

@@ -3,6 +3,7 @@ import { Schema, model, Types } from "mongoose";
 export interface ProductVersion {
   _id: Types.ObjectId;
   version: string;
+  edition: "free" | "pro";
   changelog?: string;
   zip_filename: string;
   zip_path: string;
@@ -24,6 +25,8 @@ export interface ProductDoc {
 
 const productVersionSchema = new Schema<ProductVersion>({
   version: { type: String, required: true },
+  // Free and Pro ship as separate plugin zips; is_current is per edition.
+  edition: { type: String, enum: ["free", "pro"], default: "free" },
   changelog: String,
   zip_filename: { type: String, required: true },
   zip_path: { type: String, required: true },

@@ -72,7 +72,7 @@ export const CG_FEATURES: CgFeature[] = [
         h2: "Import recipients from CSV",
         paragraphs: [
           "Go to Bulk Import, download the sample CSV, fill it in and upload it. Student imports need the columns student_name, email, school_name, certificate_type and issue_date; teachers and schools use the equivalent name field.",
-          "The Free plan imports and exports up to 500 students, 500 teachers and 500 schools; Pro and Business are unlimited. Bulk Export downloads the same records as CSV for backups.",
+          "There are no row limits on any plan, including Free. An import check maps your columns, detects delimiter and encoding, and flags problems before anything is saved; sample CSVs are included. Bulk Export downloads the same records as CSV for backups.",
         ],
       },
       {
@@ -172,7 +172,7 @@ export const CG_FEATURES: CgFeature[] = [
         h2: "Templates, types and fonts",
         paragraphs: [
           "Each recipient's certificate type is matched against the template name; if there's no match, the default template is used. Editing a template only affects future PDFs — certificates already generated are not changed.",
-          "Business plan customers can upload their own .ttf fonts and select them for any field.",
+          "Every field has its own font, size and colour, with 27 built-in fonts and automatic Unicode fonts for non-Latin names. Pro customers can also upload their own .ttf fonts.",
         ],
       },
     ],
@@ -304,24 +304,24 @@ export const CG_FEATURES: CgFeature[] = [
   },
   {
     slug: "lms-certificate-automation",
-    title: "Automatic Certificates for Tutor LMS, LearnDash, LifterLMS, Sensei & WooCommerce",
+    title: "Automatic Certificates for Tutor LMS, LearnDash, LifterLMS, Sensei, LearnPress & WooCommerce",
     description:
-      "Issue certificates automatically when a learner completes a course in Tutor LMS, LearnDash, LifterLMS or Sensei, or when a WooCommerce order completes — including multi-course track certificates.",
+      "With the Pro add-on, issue certificates automatically when a learner completes a course in Tutor LMS, LearnDash, LifterLMS, Sensei or LearnPress, or when a WooCommerce order completes — including past completions.",
     h1: "Issue certificates automatically from your LMS or store",
     answer:
-      "Certificate Generator connects to Tutor LMS, LearnDash, LifterLMS, Sensei LMS and WooCommerce. When a learner completes a course — or a WooCommerce order completes — the certificate is issued automatically, so nobody has to generate it by hand. LMS integrations are included on the Free plan.",
+      "The Certificate Generator Pro add-on connects to Tutor LMS, LearnDash, LifterLMS, Sensei LMS, LearnPress and WooCommerce. When a learner completes a course — or a WooCommerce order completes — the certificate is issued automatically, so nobody has to generate it by hand. LMS and WooCommerce integrations are part of Pro ($3.5/month).",
     sections: [
       {
         h2: "Supported platforms",
         paragraphs: [
-          "Tutor LMS, LearnDash, LifterLMS and Sensei LMS course completion, plus WooCommerce order completion. Records created this way are tagged with their source, so Bulk Send can filter by where a recipient came from.",
+          "Tutor LMS, LearnDash, LifterLMS, Sensei LMS and LearnPress course completion, plus WooCommerce order completion, each mapped to a certificate type on its own settings page. \"Issue to past completions\" backfills certificates for learners who finished before you installed Pro. Records created this way are tagged with their source, so Bulk Send can filter by where a recipient came from.",
         ],
         screenshot: "lms-integration-settings.png",
       },
       {
         h2: "Track certificates across several courses",
         paragraphs: [
-          "Multi-course \"track\" certificates are issued only after a learner has finished every course in the track — useful for programmes and learning paths.",
+          "Sensei \"track\" certificates are issued only after a learner has finished every course in the track — useful for programmes and learning paths.",
         ],
       },
     ],
