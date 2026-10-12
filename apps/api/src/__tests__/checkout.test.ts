@@ -193,6 +193,16 @@ describe("POST /api/checkout/session â€” Lemon Squeezy", () => {
     expect(sentBody().attributes.checkout_data.discount_code).toBe("LAUNCH10");
   });
 
+  it("answers 502 with a plain message when Lemon Squeezy refuses the checkout", async () => {
+    const agent = await registerUser("LsBuyer4");
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ errors: [{ detail: "The related resource does not exist." }] }), { status: 404 }));
+
+    const res = await agent.post("/api/checkout/session").send({ product: "certificate-generator", plan: "pro", billing_cycle: "monthly" });
+
+    expect(res.status).toBe(502);
+    expect(res.body.error.code).toBe("CHECKOUT_UNAVAILABLE");
+  });
+
   it("refuses a cycle with no variant set up", async () => {
     const agent = await registerUser("LsBuyer3");
 

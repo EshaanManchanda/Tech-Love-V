@@ -61,19 +61,28 @@ checkoutRouter.post("/session", requireAuth, async (req, res) => {
     couponId = coupon._id.toString();
   }
 
-  const { url } = await getPaymentProvider(providerName).createCheckout({
-    userId: user._id.toString(),
-    email: user.email,
-    providerCustomerId: providerName === "lemonsqueezy" ? user.lemonsqueezy_customer_id : user.stripe_customer_id,
-    priceId,
-    cycle: parsed.data.billing_cycle,
-    providerCouponId,
-    // The webhook reads product/plan from here first — a price id alone can't
-    // tell two products apart if they ever share one.
-    metadata: { product: productSlug, plan: parsed.data.plan, ...(couponId ? { coupon_id: couponId } : {}) },
-    successUrl: `${appUrl()}/dashboard?checkout=success`,
-    cancelUrl: `${appUrl()}${pricingPath(productSlug)}?checkout=cancelled`,
-  });
+  let url: string;
+  try {
+    ({ url } = await getPaymentProvider(providerName).createCheckout({
+      userId: user._id.toString(),
+      email: user.email,
+      providerCustomerId: providerName === "lemonsqueezy" ? user.lemonsqueezy_customer_id : user.stripe_customer_id,
+      priceId,
+      cycle: parsed.data.billing_cycle,
+      providerCouponId,
+      // The webhook reads product/plan from here first — a price id alone can't
+      // tell two products apart if they ever share one.
+      metadata: { product: productSlug, plan: parsed.data.plan, ...(couponId ? { coupon_id: couponId } : {}) },
+      successUrl: `${appUrl()}/dashboard?checkout=success`,
+      cancelUrl: `${appUrl()}${pricingPath(productSlug)}?checkout=cancelled`,
+    }));
+  } catch (err) {
+    // E.g. a variant id that doesn't exist in the store. The details go to the log, not to the buyer.
+    req.log.error({ err, provider: providerName, priceId, product: productSlug, plan: parsed.data.plan }, "checkout: provider refused");
+    return res.status(502).json({
+      error: { code: "CHECKOUT_UNAVAILABLE", message: "Checkout couldn't be started for this plan right now. Please try again later or contact us." },
+    });
+  }
 
   res.json({ url });
 });

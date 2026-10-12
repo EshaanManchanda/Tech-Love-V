@@ -10,6 +10,7 @@ import { requireAdmin, requireAuth } from "../middleware/auth.js";
 import { Plan } from "../models/Plan.js";
 import { Product } from "../models/Product.js";
 import { audit } from "../services/auditService.js";
+import { getLsVariant } from "../services/payments/lemonsqueezy.provider.js";
 
 export const adminProductsRouter = Router();
 adminProductsRouter.use(requireAuth, requireAdmin);
@@ -152,18 +153,66 @@ const planSchema = z.object({
   sort_order: z.number().int().optional(),
 });
 
+/**
+ * A typo'd variant id only shows up when a customer clicks Subscribe, so check it on save: it must exist in the
+ * store, be a subscription with the right interval, and cost what the plan says the site shows.
+ * Skipped when no Lemon Squeezy key is configured (e.g. tests, or a Stripe-only deploy).
+ */
+async function lemonSqueezyVariantProblem(plan: {
+  ls_variant_monthly?: string;
+  ls_variant_yearly?: string;
+  price_monthly?: number | null;
+  price_yearly?: number | null;
+}): Promise<string | null> {
+  if (!process.env.LEMONSQUEEZY_API_KEY) return null;
+  const checks = [
+    { id: plan.ls_variant_monthly, interval: "month", price: plan.price_monthly, label: "monthly" },
+    { id: plan.ls_variant_yearly, interval: "year", price: plan.price_yearly, label: "yearly" },
+  ] as const;
+  for (const check of checks) {
+    const id = check.id?.trim();
+    if (!id) continue;
+    if (!/^\d+$/.test(id)) return `The ${check.label} variant id should be a number (Lemon Squeezy → Products → the variant).`;
+    const variant = await getLsVariant(id);
+    if (!variant) {
+      return `Lemon Squeezy has no variant ${id} (the ${check.label} variant id). Copy the variant's id from Lemon Squeezy → Products, not its price.`;
+    }
+    if (!variant.is_subscription || variant.interval !== check.interval) {
+      return `Variant ${id} ("${variant.name}") isn't a ${check.interval}ly subscription, so it can't be the ${check.label} variant.`;
+    }
+    if (check.price != null && variant.price !== Math.round(check.price * 100)) {
+      return `Variant ${id} ("${variant.name}") costs ${variant.price / 100} in Lemon Squeezy but the ${check.label} price here is ${check.price}. Make them match.`;
+    }
+  }
+  return null;
+}
+
+function splitClearedVariants<T extends { ls_variant_monthly?: string; ls_variant_yearly?: string }>(data: T) {
+  const $set: Partial<T> = { ...data };
+  const $unset: Record<string, 1> = {};
+  for (const key of ["ls_variant_monthly", "ls_variant_yearly"] as const) {
+    if (data[key] !== undefined && !data[key]?.trim()) {
+      delete $set[key];
+      $unset[key] = 1;
+    }
+  }
+  return { $set, $unset };
+}
+
 adminProductsRouter.post("/:id/plans", async (req, res) => {
   const product = await Product.findById(req.params.id);
   if (!product) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Product not found." } });
 
   const parsed = planSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: { code: "INVALID_INPUT", message: parsed.error.issues[0].message } });
+  const variantProblem = await lemonSqueezyVariantProblem(parsed.data);
+  if (variantProblem) return res.status(400).json({ error: { code: "INVALID_VARIANT", message: variantProblem } });
 
   if (await Plan.findOne({ product_id: product._id, slug: parsed.data.slug })) {
     return res.status(409).json({ error: { code: "SLUG_TAKEN", message: "This product already has a plan with that slug." } });
   }
 
-  const plan = await Plan.create({ ...parsed.data, product_id: product._id });
+  const plan = await Plan.create({ ...splitClearedVariants(parsed.data).$set, product_id: product._id });
   await audit({ actorId: req.user!.id, action: "plan.create", resource: "Plan", resourceId: plan._id.toString(), after: parsed.data, ip: req.ip });
   res.status(201).json(plan);
 });
@@ -172,7 +221,19 @@ adminProductsRouter.patch("/:id/plans/:planId", async (req, res) => {
   const parsed = planSchema.partial().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: { code: "INVALID_INPUT", message: parsed.error.issues[0].message } });
 
-  const plan = await Plan.findOneAndUpdate({ _id: req.params.planId, product_id: req.params.id }, parsed.data, { new: true });
+  const existing = await Plan.findOne({ _id: req.params.planId, product_id: req.params.id }).lean();
+  if (!existing) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Plan not found." } });
+  // Check the plan as it will be after this edit, so changing only a price still has to match the variant.
+  const variantProblem = await lemonSqueezyVariantProblem({ ...existing, ...parsed.data });
+  if (variantProblem) return res.status(400).json({ error: { code: "INVALID_VARIANT", message: variantProblem } });
+
+  // A variant id sent as "" clears it, rather than leaving a stale id that checkout would try.
+  const { $set, $unset } = splitClearedVariants(parsed.data);
+  const plan = await Plan.findOneAndUpdate(
+    { _id: req.params.planId, product_id: req.params.id },
+    { $set, ...(Object.keys($unset).length ? { $unset } : {}) },
+    { new: true },
+  );
   if (!plan) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Plan not found." } });
 
   await audit({ actorId: req.user!.id, action: "plan.update", resource: "Plan", resourceId: plan._id.toString(), after: parsed.data, ip: req.ip });

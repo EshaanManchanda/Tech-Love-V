@@ -141,8 +141,9 @@ function PlanDialog({ productId, plan, onSaved }: { productId: string; plan?: Ad
           activation_limit: paid ? Number(form.activationLimit) || 1 : 0,
           stripe_price_monthly: form.stripeMonthly.trim() || undefined,
           stripe_price_yearly: form.stripeYearly.trim() || undefined,
-          ls_variant_monthly: form.lsMonthly.trim() || undefined,
-          ls_variant_yearly: form.lsYearly.trim() || undefined,
+          // "" (not undefined) so emptying a field clears it on the plan.
+          ls_variant_monthly: form.lsMonthly.trim(),
+          ls_variant_yearly: form.lsYearly.trim(),
           license_key_prefix: form.keyPrefix.trim(),
           cta_label: form.ctaLabel,
           cta_type: CTA_FOR_BILLING[form.billingType],
@@ -208,8 +209,9 @@ function PlanDialog({ productId, plan, onSaved }: { productId: string; plan?: Ad
                 </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                The prices above are what the site shows; keep them equal to the variants&apos; prices in Lemon Squeezy. A billing cycle
-                can&apos;t be bought until its variant id is set.
+                The variant&apos;s id number from Lemon Squeezy → Products → the product → the variant (not its price). Saving checks it
+                in Lemon Squeezy: it must be a monthly/yearly subscription with the same price as above. A billing cycle can&apos;t be
+                bought until its variant id is set.
               </p>
               <p className="pt-2 text-sm font-medium">Stripe price ids (only used when PAYMENT_PROVIDER=stripe)</p>
               <div className="grid grid-cols-2 gap-3">

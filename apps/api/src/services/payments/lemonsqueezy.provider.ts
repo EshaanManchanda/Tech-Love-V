@@ -75,6 +75,27 @@ export async function getLsSubscription(subscriptionId: string): Promise<LsSubsc
   return data.attributes as unknown as LsSubscriptionAttributes;
 }
 
+export interface LsVariant {
+  id: string;
+  name: string;
+  price: number; // in the store currency's smallest unit (paise)
+  is_subscription: boolean;
+  interval: "day" | "week" | "month" | "year" | null;
+  status: string;
+}
+
+/** One variant of the store, or null if LS has no such variant (or it belongs to another store/mode). */
+export async function getLsVariant(variantId: string): Promise<LsVariant | null> {
+  try {
+    const { data } = await lsApi("GET", `/variants/${encodeURIComponent(variantId)}`);
+    const a = data.attributes as Omit<LsVariant, "id">;
+    return { id: data.id, name: a.name, price: a.price, is_subscription: a.is_subscription, interval: a.interval, status: a.status };
+  } catch (err) {
+    if (err instanceof LemonSqueezyError && / 404 /.test(err.message)) return null;
+    throw err;
+  }
+}
+
 export interface LsDiscountInput {
   code: string;
   amountType: "percent" | "fixed";
