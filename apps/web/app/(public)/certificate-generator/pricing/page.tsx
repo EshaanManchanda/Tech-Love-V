@@ -9,6 +9,7 @@ import { useUser } from "@/lib/useUser";
 import { CONTACT_URL, FEATURES, PLANS, type FeatureRow, type PlanCopy } from "@/lib/plans";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { CheckoutConsent } from "@/components/legal-page";
 
 interface PlanCompareResponse {
   plans: PlanCopy[];
@@ -128,6 +129,7 @@ export default function PricingPage() {
             <Button onClick={subscribePro} disabled={loading} className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700">
               {loading ? "Redirecting…" : pro.cta.label}
             </Button>
+              <CheckoutConsent />
           </CardContent>
         </Card>
 
@@ -138,7 +140,7 @@ export default function PricingPage() {
             <h2 className="mt-3 text-lg font-semibold">{business.label}</h2>
             <p className="mt-2 text-2xl font-bold">{business.priceNote}</p>
             <p className="mt-4 text-sm text-slate-600">Everything in Pro on up to 5 sites, with custom terms for agencies and institutions.</p>
-            <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer">
+            <a href={CONTACT_URL}>
               <Button className="mt-6 w-full bg-slate-100 text-slate-900 hover:bg-slate-200">{business.cta.label}</Button>
             </a>
           </CardContent>

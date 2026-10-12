@@ -23,6 +23,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...CG_DOCS.map((d) => `/docs/certificate-generator/${d.slug}`),
     "/blog",
     ...BLOG_POSTS.map((p) => `/blog/${p.slug}`),
+    "/privacy",
+    "/terms",
+    "/refund-policy",
   ];
   return paths.map((path) => ({ url: `${SITE_URL}${path}` }));
 }

@@ -36,9 +36,15 @@ export function SiteFooter() {
           </div>
           <div className="flex flex-col gap-2">
             <span className="font-medium text-slate-900">Contact</span>
-            <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-slate-900">
+            <a href={CONTACT_URL} className="text-slate-500 hover:text-slate-900">
               Contact us
             </a>
+          </div>
+          <div className="flex flex-col gap-2">
+            <span className="font-medium text-slate-900">Legal</span>
+            <Link href="/privacy" className="text-slate-500 hover:text-slate-900">Privacy Policy</Link>
+            <Link href="/terms" className="text-slate-500 hover:text-slate-900">Terms of Service</Link>
+            <Link href="/refund-policy" className="text-slate-500 hover:text-slate-900">Refund Policy</Link>
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { JsonLd } from "@/components/json-ld";
+import { CheckoutConsent } from "@/components/legal-page";
 import { PlanCheckoutButton } from "@/components/plan-checkout-button";
 import { ProductPrimaryCta } from "@/components/product-primary-cta";
 import { API_URL } from "@/lib/api";
@@ -150,9 +151,12 @@ export default async function DynamicProductPage({ params }: { params: { slug: s
                       </p>
                     ) : null}
                     {plan.cta_type === "checkout" ? (
-                      <PlanCheckoutButton product={product.slug} plan={plan.slug} label={plan.cta_label} className={buttonClass} />
+                      <>
+                        <PlanCheckoutButton product={product.slug} plan={plan.slug} label={plan.cta_label} className={buttonClass} />
+                        <CheckoutConsent />
+                      </>
                     ) : plan.cta_type === "contact" ? (
-                      <a href={CONTACT_URL} target="_blank" rel="noopener noreferrer" className={buttonClass}>
+                      <a href={CONTACT_URL} className={buttonClass}>
                         {plan.cta_label}
                       </a>
                     ) : (

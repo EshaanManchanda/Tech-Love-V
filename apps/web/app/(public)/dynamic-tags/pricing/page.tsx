@@ -9,6 +9,7 @@ import { useUser } from "@/lib/useUser";
 import { DT_FEATURES, DT_PLANS, type DtFeatureRow, type DtPlanCopy } from "@/lib/plans";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { CheckoutConsent } from "@/components/legal-page";
 
 interface PlanCompareResponse {
   plans: DtPlanCopy[];
@@ -106,6 +107,7 @@ export default function DynamicTagsPricingPage() {
             <Button onClick={subscribe} disabled={loading} className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700">
               {loading ? "Redirecting…" : paid.cta.label}
             </Button>
+              <CheckoutConsent />
           </CardContent>
         </Card>
       </div>

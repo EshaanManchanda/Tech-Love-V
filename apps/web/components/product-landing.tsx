@@ -272,8 +272,6 @@ export function ProductLanding({
                   <p className="mt-4 text-sm text-slate-600">{plan.highlight}</p>
                   <a
                     href={planHref(plan, pricingHref, productSlug)}
-                    target={plan.cta_type === "contact" ? "_blank" : undefined}
-                    rel={plan.cta_type === "contact" ? "noopener noreferrer" : undefined}
                   >
                     <Button className={plan.highlighted ? "mt-6 w-full bg-brand-600 hover:bg-brand-700" : "mt-6 w-full bg-slate-100 text-slate-900 hover:bg-slate-200"}>
                       {plan.cta_label}

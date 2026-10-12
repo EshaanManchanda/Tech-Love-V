@@ -87,7 +87,7 @@ export const FEATURES: FeatureRow[] = [
   { key: "sites", label: "Sites per license key", free: "Unlimited (no key)", pro: "1", business: "5" },
 ];
 
-export const CONTACT_URL = "https://eshaanportfolio.vercel.app/contact";
+export const CONTACT_URL = "mailto:techlovev@gmail.com";
 
 // Dynamic Tags — second product, only two plans, so its own small shapes
 // rather than force-fitting the three-tier PlanCopy/FeatureRow above.
