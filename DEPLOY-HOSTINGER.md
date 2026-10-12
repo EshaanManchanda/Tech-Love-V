@@ -177,12 +177,10 @@ invoices. `PAYMENT_PROVIDER=lemonsqueezy` in `apps/api/.env` sends new checkouts
 
 1. **Activate the store.** Lemon Squeezy → Settings → Stores: finish identity verification and payout details,
    or checkouts stay in test mode.
-2. **Create the products.** One product per plugin, and a **subscription variant** per plan, cycle and
-   currency. Lemon Squeezy charges in one store currency (USD), so the "India" variants are USD prices that come
-   to about the INR price (e.g. Pro monthly ≈ ₹249, yearly ≈ ₹2,999).
-3. **Enter the variant ids.** Admin → Products → (product) → Plans → **Edit** → the four Lemon Squeezy variant
-   ids (monthly/yearly × USD/India) and the INR display prices. A cycle/currency can't be bought until its
-   variant id is set.
+2. **Create the products.** One product per plugin, and a **subscription variant** per plan and billing cycle,
+   priced in the store currency (INR): Pro ₹249/month and ₹2,499/year, Dynamic Tags Paid ₹149/month and ₹1,499/year.
+3. **Enter the variant ids.** Admin → Products → (product) → Plans → **Edit** → the monthly and yearly Lemon
+   Squeezy variant ids, and the same prices the variants have. A billing cycle can't be bought until its variant id is set.
 4. **API key and store id.** Settings → API → new key into `LEMONSQUEEZY_API_KEY`; the store's number (Settings
    → Stores) into `LEMONSQUEEZY_STORE_ID`.
 5. **Add the webhook.** Settings → Webhooks → `https://api.example.com/api/webhooks/lemonsqueezy` with a
@@ -191,8 +189,10 @@ invoices. `PAYMENT_PROVIDER=lemonsqueezy` in `apps/api/.env` sends new checkouts
    `subscription_paused`, `subscription_unpaused`, `subscription_payment_success`,
    `subscription_payment_failed`, `subscription_payment_recovered`, `subscription_payment_refunded` and
    `order_refunded`. Then run `pm2 restart api`.
-6. **Coupons.** Admin → Coupons creates the matching Lemon Squeezy discount code (percentage, fixed amount
-   or free months). Free trials are set on the variant in Lemon Squeezy instead.
+6. **Coupons.** Admin → Coupons creates the matching Lemon Squeezy discount code (percentage or fixed amount
+   off the first payment, or free months), limited to the chosen plans' variants; disabling a coupon deletes the
+   code in Lemon Squeezy too. Buyers enter it under "Have a coupon code?" on the pricing page. Free trials are set on
+   the variant in Lemon Squeezy instead.
 
 ### Stripe (fallback)
 

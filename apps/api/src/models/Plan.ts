@@ -19,14 +19,10 @@ export interface PlanDoc {
   activation_limit: number; // sites a license can activate; 0 = n/a (free has no license)
   stripe_price_monthly?: string; // Stripe price ids for checkout; unset → legacy env vars (config/plans.ts)
   stripe_price_yearly?: string;
-  // Lemon Squeezy variant ids, used when PAYMENT_PROVIDER=lemonsqueezy. LS charges in one store
-  // currency (USD), so "inr" variants are USD-priced at about the INR price, for buyers who pick INR.
-  ls_variant_monthly_usd?: string;
-  ls_variant_yearly_usd?: string;
-  ls_variant_monthly_inr?: string;
-  ls_variant_yearly_inr?: string;
-  price_monthly_inr?: number | null; // display only, e.g. 249
-  price_yearly_inr?: number | null; // display only, e.g. 2999
+  // Lemon Squeezy variant ids, used when PAYMENT_PROVIDER=lemonsqueezy. The LS store charges in
+  // its own currency (INR), so price_monthly/price_yearly/currency should match the variants.
+  ls_variant_monthly?: string;
+  ls_variant_yearly?: string;
   license_key_prefix?: string; // e.g. "PRO" → PRO-XXXX-…; unset → legacy prefix or product initials
   cta_label: string;
   cta_type: "register" | "checkout" | "contact";
@@ -43,18 +39,14 @@ const planSchema = new Schema<PlanDoc>({
   price_monthly: { type: Number, default: null },
   price_yearly: { type: Number, default: null },
   price_note: String,
-  currency: { type: String, default: "usd" },
+  currency: { type: String, default: "inr" }, // the Lemon Squeezy store's currency
   cert_limit: { type: Number, required: true },
   bulk_cap: { type: Number, required: true },
   activation_limit: { type: Number, default: 0 },
   stripe_price_monthly: String,
   stripe_price_yearly: String,
-  ls_variant_monthly_usd: String,
-  ls_variant_yearly_usd: String,
-  ls_variant_monthly_inr: String,
-  ls_variant_yearly_inr: String,
-  price_monthly_inr: { type: Number, default: null },
-  price_yearly_inr: { type: Number, default: null },
+  ls_variant_monthly: String,
+  ls_variant_yearly: String,
   license_key_prefix: { type: String, uppercase: true, trim: true },
   cta_label: { type: String, required: true },
   cta_type: { type: String, enum: ["register", "checkout", "contact"], required: true },

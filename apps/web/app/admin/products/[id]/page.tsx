@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { api, apiUpload, ApiError } from "@/lib/api";
+import { formatPrice } from "@/lib/price";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,12 +36,9 @@ interface AdminPlan {
   activation_limit?: number;
   stripe_price_monthly?: string;
   stripe_price_yearly?: string;
-  ls_variant_monthly_usd?: string;
-  ls_variant_yearly_usd?: string;
-  ls_variant_monthly_inr?: string;
-  ls_variant_yearly_inr?: string;
-  price_monthly_inr?: number | null;
-  price_yearly_inr?: number | null;
+  ls_variant_monthly?: string;
+  ls_variant_yearly?: string;
+  currency?: string;
   license_key_prefix?: string;
   cta_label: string;
   cta_type: "register" | "checkout" | "contact";
@@ -121,12 +119,8 @@ function PlanDialog({ productId, plan, onSaved }: { productId: string; plan?: Ad
     activationLimit: plan?.activation_limit ? String(plan.activation_limit) : "1",
     stripeMonthly: plan?.stripe_price_monthly ?? "",
     stripeYearly: plan?.stripe_price_yearly ?? "",
-    priceMonthlyInr: plan?.price_monthly_inr?.toString() ?? "",
-    priceYearlyInr: plan?.price_yearly_inr?.toString() ?? "",
-    lsMonthlyUsd: plan?.ls_variant_monthly_usd ?? "",
-    lsYearlyUsd: plan?.ls_variant_yearly_usd ?? "",
-    lsMonthlyInr: plan?.ls_variant_monthly_inr ?? "",
-    lsYearlyInr: plan?.ls_variant_yearly_inr ?? "",
+    lsMonthly: plan?.ls_variant_monthly ?? "",
+    lsYearly: plan?.ls_variant_yearly ?? "",
     keyPrefix: plan?.license_key_prefix ?? "",
     ctaLabel: plan?.cta_label ?? "Subscribe",
   });
@@ -147,12 +141,8 @@ function PlanDialog({ productId, plan, onSaved }: { productId: string; plan?: Ad
           activation_limit: paid ? Number(form.activationLimit) || 1 : 0,
           stripe_price_monthly: form.stripeMonthly.trim() || undefined,
           stripe_price_yearly: form.stripeYearly.trim() || undefined,
-          price_monthly_inr: form.priceMonthlyInr ? Number(form.priceMonthlyInr) : null,
-          price_yearly_inr: form.priceYearlyInr ? Number(form.priceYearlyInr) : null,
-          ls_variant_monthly_usd: form.lsMonthlyUsd.trim() || undefined,
-          ls_variant_yearly_usd: form.lsYearlyUsd.trim() || undefined,
-          ls_variant_monthly_inr: form.lsMonthlyInr.trim() || undefined,
-          ls_variant_yearly_inr: form.lsYearlyInr.trim() || undefined,
+          ls_variant_monthly: form.lsMonthly.trim() || undefined,
+          ls_variant_yearly: form.lsYearly.trim() || undefined,
           license_key_prefix: form.keyPrefix.trim(),
           cta_label: form.ctaLabel,
           cta_type: CTA_FOR_BILLING[form.billingType],
@@ -198,41 +188,28 @@ function PlanDialog({ productId, plan, onSaved }: { productId: string; plan?: Ad
             <>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label htmlFor="plan-monthly">Price / month (USD)</Label>
+                  <Label htmlFor="plan-monthly">Price / month ({(plan?.currency ?? "inr").toUpperCase()})</Label>
                   <Input id="plan-monthly" type="number" min={0} step="0.01" value={form.priceMonthly} onChange={set("priceMonthly")} className="mt-1" />
                 </div>
                 <div>
-                  <Label htmlFor="plan-yearly">Price / year (USD)</Label>
+                  <Label htmlFor="plan-yearly">Price / year ({(plan?.currency ?? "inr").toUpperCase()})</Label>
                   <Input id="plan-yearly" type="number" min={0} step="0.01" value={form.priceYearly} onChange={set("priceYearly")} className="mt-1" />
-                </div>
-                <div>
-                  <Label htmlFor="plan-monthly-inr">Price / month (INR, shown only)</Label>
-                  <Input id="plan-monthly-inr" type="number" min={0} step="1" value={form.priceMonthlyInr} onChange={set("priceMonthlyInr")} className="mt-1" placeholder="e.g. 249" />
-                </div>
-                <div>
-                  <Label htmlFor="plan-yearly-inr">Price / year (INR, shown only)</Label>
-                  <Input id="plan-yearly-inr" type="number" min={0} step="1" value={form.priceYearlyInr} onChange={set("priceYearlyInr")} className="mt-1" placeholder="e.g. 2999" />
                 </div>
               </div>
               <p className="pt-2 text-sm font-medium">Lemon Squeezy variant ids</p>
               <div className="grid grid-cols-2 gap-3">
-                {(
-                  [
-                    ["lsMonthlyUsd", "Monthly, USD"],
-                    ["lsYearlyUsd", "Yearly, USD"],
-                    ["lsMonthlyInr", "Monthly, India"],
-                    ["lsYearlyInr", "Yearly, India"],
-                  ] as const
-                ).map(([key, label]) => (
-                  <div key={key}>
-                    <Label htmlFor={`plan-${key}`}>{label}</Label>
-                    <Input id={`plan-${key}`} value={form[key]} onChange={set(key)} className="mt-1 font-mono text-xs" placeholder="e.g. 123456" />
-                  </div>
-                ))}
+                <div>
+                  <Label htmlFor="plan-ls-monthly">Monthly</Label>
+                  <Input id="plan-ls-monthly" value={form.lsMonthly} onChange={set("lsMonthly")} className="mt-1 font-mono text-xs" placeholder="e.g. 123456" />
+                </div>
+                <div>
+                  <Label htmlFor="plan-ls-yearly">Yearly</Label>
+                  <Input id="plan-ls-yearly" value={form.lsYearly} onChange={set("lsYearly")} className="mt-1 font-mono text-xs" placeholder="e.g. 123457" />
+                </div>
               </div>
               <p className="text-xs text-muted-foreground">
-                Lemon Squeezy charges in USD only, so the India variants are USD prices that come to about the INR price above. A
-                cycle/currency can&apos;t be bought until its variant id is set.
+                The prices above are what the site shows; keep them equal to the variants&apos; prices in Lemon Squeezy. A billing cycle
+                can&apos;t be bought until its variant id is set.
               </p>
               <p className="pt-2 text-sm font-medium">Stripe price ids (only used when PAYMENT_PROVIDER=stripe)</p>
               <div className="grid grid-cols-2 gap-3">
@@ -310,7 +287,7 @@ function PlansTab({ productId }: { productId: string }) {
               <TableRow key={p._id}>
                 <TableCell>{p.name}</TableCell>
                 <TableCell className="font-mono text-xs">{p.slug}</TableCell>
-                <TableCell>{p.price_monthly != null ? `$${p.price_monthly}/mo` : "—"}</TableCell>
+                <TableCell>{p.price_monthly != null ? `${formatPrice(p.price_monthly, p.currency)}/mo` : "—"}</TableCell>
                 <TableCell>
                   <Badge variant={p.status === "active" ? "seal" : "secondary"} className="uppercase">
                     {p.status}

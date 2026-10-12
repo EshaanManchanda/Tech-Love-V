@@ -177,7 +177,7 @@ export const openApiSpec = {
         summary: "Create a checkout (Lemon Squeezy or Stripe, per PAYMENT_PROVIDER)",
         tags: ["Billing"],
         security: [cookieAuth],
-        requestBody: { content: { "application/json": { schema: { properties: { product: { type: "string" }, plan: { type: "string" }, billing_cycle: { enum: ["monthly", "yearly"] }, currency: { enum: ["usd", "inr"], description: "With Lemon Squeezy both charge USD; inr picks the India-priced variant" }, coupon_code: {} } } } } },
+        requestBody: { content: { "application/json": { schema: { properties: { product: { type: "string" }, plan: { type: "string" }, billing_cycle: { enum: ["monthly", "yearly"] }, coupon_code: {} } } } } },
         responses: { "200": { description: "OK — { url }" } },
       },
     },

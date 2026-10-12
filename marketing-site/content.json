@@ -133,7 +133,7 @@
     },
     {
       "title": "A genuinely free plugin, simple Pro pricing",
-      "detail": "The free plugin has no caps on certificates, emails, imports or templates, no license key and no account required. Pro is $3.5/month ($35/year) for LMS and WooCommerce auto-issue, the REST API and custom fonts — not a quote-only enterprise wall."
+      "detail": "The free plugin has no caps on certificates, emails, imports or templates, no license key and no account required. Pro is ₹249/month (₹2,499/year) for LMS and WooCommerce auto-issue, the REST API and custom fonts — not a quote-only enterprise wall."
     }
   ],
   "comparison": {
@@ -191,7 +191,7 @@
       ],
       [
         "Pricing model",
-        "Free plugin + $3.5/mo Pro add-on",
+        "Free plugin + ₹249/mo Pro add-on",
         "Often $50-150/yr flat or quote-only"
       ]
     ]
@@ -206,8 +206,8 @@
     },
     {
       "name": "Pro",
-      "price": "$3.5/mo",
-      "highlight": "Everything in Free plus auto-issue from Tutor LMS, LearnDash, LifterLMS, Sensei, LearnPress and WooCommerce, past-completion backfill, REST API, custom font upload, priority support — or $35/year",
+      "price": "₹249/mo",
+      "highlight": "Everything in Free plus auto-issue from Tutor LMS, LearnDash, LifterLMS, Sensei, LearnPress and WooCommerce, past-completion backfill, REST API, custom font upload, priority support — or ₹2,499/year",
       "cta_label": "Subscribe",
       "cta_type": "checkout",
       "highlighted": true

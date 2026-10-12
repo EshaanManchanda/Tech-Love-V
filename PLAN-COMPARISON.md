@@ -9,7 +9,7 @@ the code, update this doc too.
 | Plan         | Price          | How to get it |
 |--------------|----------------|---------------|
 | **Free**     | $0             | Default on activation — no license key needed |
-| **Pro**      | **$3.5/month or $35/year** | License key starting `PRO-`, activated on the License tab |
+| **Pro**      | **₹249/month or ₹2,499/year** | License key starting `PRO-`, activated on the License tab |
 | **Business** | Full access — contact for pricing | [Contact us](https://eshaanportfolio.vercel.app/contact) — license key starting `BIZ-` |
 
 Upgrade / pricing page: `https://eshaanportfolio.vercel.app/` (falls back to

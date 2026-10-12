@@ -298,7 +298,7 @@ function IssueLicenseDialog({ onIssued }: { onIssued: () => void }) {
                 id="issue-price-note"
                 value={priceNote}
                 onChange={(e) => setPriceNote(e.target.value)}
-                placeholder="e.g. $199/mo, invoiced quarterly"
+                placeholder="e.g. ₹4,999/yr, invoiced annually"
                 className="mt-1"
               />
             </div>

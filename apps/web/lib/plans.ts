@@ -12,8 +12,7 @@ export interface PlanCopy {
   label: string;
   priceMonthly: number | null;
   priceYearly: number | null;
-  priceMonthlyInr?: number | null; // display only; checkout charges USD
-  priceYearlyInr?: number | null;
+  currency?: string; // "inr": the Lemon Squeezy store's currency (lib/price.ts formatPrice)
   priceNote?: string; // e.g. "Contact for pricing"
   certLimit: string; // "Unlimited" on every plan since the free plugin dropped its caps (7.6)
   bulkCap: string;
@@ -27,6 +26,7 @@ export const PLANS: PlanCopy[] = [
     label: "Free",
     priceMonthly: 0,
     priceYearly: 0,
+    currency: "inr",
     certLimit: "Unlimited",
     bulkCap: "Unlimited",
     cta: { label: "Download free", type: "register" },
@@ -34,10 +34,9 @@ export const PLANS: PlanCopy[] = [
   {
     slug: "pro",
     label: "Pro",
-    priceMonthly: 3.5,
-    priceYearly: 35,
-    priceMonthlyInr: 249,
-    priceYearlyInr: 2999,
+    priceMonthly: 249,
+    priceYearly: 2499,
+    currency: "inr",
     certLimit: "Unlimited",
     bulkCap: "Unlimited",
     cta: { label: "Subscribe", type: "checkout" },
@@ -100,15 +99,14 @@ export interface DtPlanCopy {
   label: string;
   priceMonthly: number | null;
   priceYearly: number | null;
-  priceMonthlyInr?: number | null; // display only; checkout charges USD
-  priceYearlyInr?: number | null;
+  currency?: string;
   cta: { label: string; type: "checkout" | "register" };
   highlight?: boolean;
 }
 
 export const DT_PLANS: DtPlanCopy[] = [
-  { slug: "free", label: "Free", priceMonthly: 0, priceYearly: 0, cta: { label: "Get started free", type: "register" } },
-  { slug: "paid", label: "Paid", priceMonthly: 2, priceYearly: 19, cta: { label: "Subscribe", type: "checkout" }, highlight: true },
+  { slug: "free", label: "Free", priceMonthly: 0, priceYearly: 0, currency: "inr", cta: { label: "Get started free", type: "register" } },
+  { slug: "paid", label: "Paid", priceMonthly: 149, priceYearly: 1499, currency: "inr", cta: { label: "Subscribe", type: "checkout" }, highlight: true },
 ];
 
 export interface DtFeatureRow {

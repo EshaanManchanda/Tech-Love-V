@@ -46,9 +46,9 @@ export default async function CertificateGeneratorPage() {
     publisher: { "@id": `${SITE_URL}/#organization` },
     // Prices with a published number only — Business is contact-for-pricing, so it's left out.
     offers: [
-      { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
-      { "@type": "Offer", name: "Pro (monthly)", price: "3.5", priceCurrency: "USD", url: `${SITE_URL}/certificate-generator/pricing` },
-      { "@type": "Offer", name: "Pro (yearly)", price: "35", priceCurrency: "USD", url: `${SITE_URL}/certificate-generator/pricing` },
+      { "@type": "Offer", name: "Free", price: "0", priceCurrency: "INR" },
+      { "@type": "Offer", name: "Pro (monthly)", price: "249", priceCurrency: "INR", url: `${SITE_URL}/certificate-generator/pricing` },
+      { "@type": "Offer", name: "Pro (yearly)", price: "2499", priceCurrency: "INR", url: `${SITE_URL}/certificate-generator/pricing` },
     ],
   };
   return (

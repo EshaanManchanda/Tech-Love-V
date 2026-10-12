@@ -309,7 +309,7 @@ export const CG_FEATURES: CgFeature[] = [
       "With the Pro add-on, issue certificates automatically when a learner completes a course in Tutor LMS, LearnDash, LifterLMS, Sensei or LearnPress, or when a WooCommerce order completes — including past completions.",
     h1: "Issue certificates automatically from your LMS or store",
     answer:
-      "The Certificate Generator Pro add-on connects to Tutor LMS, LearnDash, LifterLMS, Sensei LMS, LearnPress and WooCommerce. When a learner completes a course — or a WooCommerce order completes — the certificate is issued automatically, so nobody has to generate it by hand. LMS and WooCommerce integrations are part of Pro ($3.5/month).",
+      "The Certificate Generator Pro add-on connects to Tutor LMS, LearnDash, LifterLMS, Sensei LMS, LearnPress and WooCommerce. When a learner completes a course — or a WooCommerce order completes — the certificate is issued automatically, so nobody has to generate it by hand. LMS and WooCommerce integrations are part of Pro (₹249/month).",
     sections: [
       {
         h2: "Supported platforms",

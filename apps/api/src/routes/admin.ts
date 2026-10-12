@@ -18,7 +18,7 @@ import { cookieDomain, hashPassword, signImpersonationToken, signSetPasswordToke
 import { generateLicenseKey, todayIsoDate } from "../services/licenseService.js";
 import { createPersonalOrganization, findPrimaryOrganization } from "../services/organizationService.js";
 import { activeProviderName } from "../services/payments/index.js";
-import { createLsDiscount } from "../services/payments/lemonsqueezy.provider.js";
+import { createLsDiscount, deleteLsDiscount } from "../services/payments/lemonsqueezy.provider.js";
 import { stripe } from "../services/stripeClient.js";
 
 export const adminRouter = Router();
@@ -398,6 +398,21 @@ adminRouter.get("/coupons", async (_req, res) => {
   res.json(coupons);
 });
 
+// The plans a coupon can apply to: every product's active recurring plans. Coupons store plan slugs.
+adminRouter.get("/coupons/plans", async (_req, res) => {
+  const plans = await Plan.find({ billing_type: "recurring", status: "active" }).sort({ sort_order: 1 }).lean();
+  const products = await Product.find({ _id: { $in: plans.map((p) => p.product_id) } }).lean();
+  const nameById = new Map(products.map((p) => [p._id.toString(), p.name]));
+  res.json(
+    plans.map((p) => ({
+      slug: p.slug,
+      name: p.name,
+      product: nameById.get(p.product_id.toString()) ?? "",
+      ready: !!(p.ls_variant_monthly || p.ls_variant_yearly), // has a Lemon Squeezy variant to attach the code to
+    })),
+  );
+});
+
 const couponCreateSchema = z.object({
   code: z.string().min(1),
   type: z.enum(["percentage", "fixed_amount", "free_trial", "free_months"]),
@@ -412,17 +427,34 @@ const couponCreateSchema = z.object({
   ls_discount_code: z.string().optional(),
 });
 
-/** With Lemon Squeezy, the coupon is a discount code in the store: use the given one or create it. */
-async function createLemonSqueezyCoupon(data: z.infer<typeof couponCreateSchema>): Promise<{ code: string } | { error: string }> {
+/**
+ * With Lemon Squeezy, the coupon is a discount code in the store: use one already made there, or create it,
+ * limited to the applicable plans' variants (a buyer can also type the code straight into the LS checkout).
+ */
+async function createLemonSqueezyCoupon(
+  data: z.infer<typeof couponCreateSchema>,
+  applicablePlans: string[],
+): Promise<{ code: string; id?: string } | { error: string }> {
   if (data.ls_discount_code) return { code: data.ls_discount_code.toUpperCase() };
+  if (data.type === "free_trial") {
+    return { error: "Lemon Squeezy discounts can't make a free trial; set a trial on the variant in Lemon Squeezy instead." };
+  }
+
+  const plans = await Plan.find({ slug: { $in: applicablePlans }, status: "active" }).lean();
+  const variantIds = plans.flatMap((p) => [p.ls_variant_monthly, p.ls_variant_yearly]).filter((id): id is string => !!id);
+  if (!variantIds.length) {
+    return { error: "None of the chosen plans has a Lemon Squeezy variant id yet; set them in Admin → Products first." };
+  }
+
   const code = data.code.toUpperCase();
-  const common = { code, maxRedemptions: data.max_redemptions, expiresAt: data.expires_at ? new Date(data.expires_at) : undefined };
-  if (data.type === "percentage") await createLsDiscount({ ...common, amountType: "percent", amount: data.value, duration: "once" });
-  else if (data.type === "fixed_amount") await createLsDiscount({ ...common, amountType: "fixed", amount: Math.round(data.value * 100), duration: "once" });
-  else if (data.type === "free_months") {
-    await createLsDiscount({ ...common, amountType: "percent", amount: 100, duration: "repeating", durationInMonths: Math.round(data.value) });
-  } else return { error: "Lemon Squeezy discounts can't make a free trial; set a trial on the variant in Lemon Squeezy instead." };
-  return { code };
+  const common = { code, variantIds, maxRedemptions: data.max_redemptions, expiresAt: data.expires_at ? new Date(data.expires_at) : undefined };
+  const id =
+    data.type === "percentage"
+      ? await createLsDiscount({ ...common, amountType: "percent", amount: data.value, duration: "once" })
+      : data.type === "fixed_amount" // in the store currency's smallest unit (paise)
+        ? await createLsDiscount({ ...common, amountType: "fixed", amount: Math.round(data.value * 100), duration: "once" })
+        : await createLsDiscount({ ...common, amountType: "percent", amount: 100, duration: "repeating", durationInMonths: Math.round(data.value) });
+  return { code, id };
 }
 
 adminRouter.post("/coupons", async (req, res) => {
@@ -430,17 +462,22 @@ adminRouter.post("/coupons", async (req, res) => {
   if (!parsed.success) return res.status(400).json({ error: { code: "INVALID_INPUT", message: parsed.error.issues[0].message } });
 
   if (activeProviderName() === "lemonsqueezy") {
-    const created = await createLemonSqueezyCoupon(parsed.data);
+    const applicablePlans = parsed.data.applicable_plans ?? ["pro", "business"];
+    if (await Coupon.exists({ code: parsed.data.code.toUpperCase() })) {
+      return res.status(400).json({ error: { code: "DUPLICATE_CODE", message: "A coupon with that code already exists." } });
+    }
+    const created = await createLemonSqueezyCoupon(parsed.data, applicablePlans);
     if ("error" in created) return res.status(400).json({ error: { code: "UNSUPPORTED_COUPON", message: created.error } });
     const coupon = await Coupon.create({
       code: parsed.data.code.toUpperCase(),
       ls_discount_code: created.code,
+      ls_discount_id: created.id,
       stripe_coupon_id: parsed.data.stripe_coupon_id,
       type: parsed.data.type,
       value: parsed.data.value,
       max_redemptions: parsed.data.max_redemptions,
       expires_at: parsed.data.expires_at ? new Date(parsed.data.expires_at) : undefined,
-      applicable_plans: parsed.data.applicable_plans ?? ["pro", "business"],
+      applicable_plans: applicablePlans,
     });
     await audit({
       actorId: req.user!.id,
@@ -496,6 +533,16 @@ adminRouter.post("/coupons", async (req, res) => {
 adminRouter.post("/coupons/:id/disable", async (req, res) => {
   const coupon = await Coupon.findByIdAndUpdate(req.params.id, { status: "disabled" }, { new: true });
   if (!coupon) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Coupon not found." } });
+  // Otherwise the code would keep working when typed into the Lemon Squeezy checkout.
+  if (coupon.ls_discount_id) {
+    try {
+      await deleteLsDiscount(coupon.ls_discount_id);
+    } catch (err) {
+      return res.status(502).json({
+        error: { code: "PROVIDER_ERROR", message: `Disabled here, but couldn't delete it in Lemon Squeezy: ${(err as Error).message}` },
+      });
+    }
+  }
   await audit({ actorId: req.user!.id, action: "coupon.disable", resource: "Coupon", resourceId: coupon._id.toString(), ip: req.ip });
   res.json(coupon);
 });

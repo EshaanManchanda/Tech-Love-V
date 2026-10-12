@@ -52,13 +52,13 @@ export default function AdminOverviewPage() {
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">MRR</CardTitle>
           </CardHeader>
-          <CardContent className="text-3xl font-bold">${data.mrr.toLocaleString()}</CardContent>
+          <CardContent className="text-3xl font-bold">₹{data.mrr.toLocaleString("en-IN")}</CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">ARR</CardTitle>
           </CardHeader>
-          <CardContent className="text-3xl font-bold">${data.arr.toLocaleString()}</CardContent>
+          <CardContent className="text-3xl font-bold">₹{data.arr.toLocaleString("en-IN")}</CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">

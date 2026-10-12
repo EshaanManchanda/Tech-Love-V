@@ -60,7 +60,8 @@ export default function TermsPage() {
 
       <h2>Refunds</h2>
       <p>
-        See the <Link href="/refund-policy">Refund Policy</Link>: 14 days for a first payment, 7 days for a renewal.
+        See the <Link href="/refund-policy">Refund Policy</Link>: a full refund if you cancel within 7 days of starting a subscription;
+        after that, no refunds, but you keep access until the end of the period you paid for.
       </p>
 
       <h2>Fair use</h2>

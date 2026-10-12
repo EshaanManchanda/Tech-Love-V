@@ -94,7 +94,7 @@
     },
     {
       "title": "Transparent, low-friction pricing",
-      "detail": "$2/month or $19/year unlocks the entire dynamic-data layer — one site, one price, no quote-only enterprise tier to negotiate."
+      "detail": "₹149/month or ₹1,499/year unlocks the entire dynamic-data layer — one site, one price, no quote-only enterprise tier to negotiate."
     }
   ],
   "comparison": {
@@ -102,18 +102,18 @@
     "columns": ["Capability", "Dynamic Tags", "Typical dynamic-content plugins"],
     "rows": [
       ["Free plan tag limit", "Up to 15, fully functional", "Often 3-5, or core features gated"],
-      ["WooCommerce fields", "Included on Paid, $2/mo", "Frequently a separate paid add-on"],
+      ["WooCommerce fields", "Included on Paid, ₹149/mo", "Frequently a separate paid add-on"],
       ["ACF repeater/relationship support", "Included on Paid", "Often requires a second ACF-specific plugin"],
       ["Field-based conditionals / block visibility", "Included on Paid", "Usually a separate rules-engine plugin"],
       ["External API data source", "Included on Paid ({api:...})", "Rare — usually needs custom code"],
       ["Conflict detection & import/export", "Free forever, every plan", "Often missing or paid-only"],
       ["Builder compatibility", "Elementor, Gutenberg, Divi, any widget", "Sometimes locked to one builder"],
       ["Site count per license", "1 site, simple pricing", "Often tiered by site count with steep upgrades"],
-      ["Pricing model", "$2/mo or $19/yr flat", "Often $29-199/yr, tiered by feature count"]
+      ["Pricing model", "₹149/mo or ₹1,499/yr flat", "Often $29-199/yr, tiered by feature count"]
     ]
   },
   "plans_summary": [
     { "name": "Free", "price": "$0", "highlight": "Up to 15 dynamic tags, every core placeholder and formatter, all ops tooling included", "cta_label": "Get started free", "cta_type": "register" },
-    { "name": "Paid", "price": "$2/mo", "highlight": "Unlimited tags, WooCommerce/ACF arrays, [dt_loop], field conditionals, query/API sources", "cta_label": "Subscribe", "cta_type": "checkout", "highlighted": true }
+    { "name": "Paid", "price": "₹149/mo", "highlight": "Unlimited tags, WooCommerce/ACF arrays, [dt_loop], field conditionals, query/API sources", "cta_label": "Subscribe", "cta_type": "checkout", "highlighted": true }
   ]
 }

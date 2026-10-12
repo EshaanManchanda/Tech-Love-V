@@ -11,6 +11,7 @@ export interface CouponDoc {
   stripe_coupon_id?: string;
   // The same coupon as a Lemon Squeezy discount code, used when PAYMENT_PROVIDER=lemonsqueezy.
   ls_discount_code?: string;
+  ls_discount_id?: string; // set when we created the discount in LS, so disabling can delete it there
   type: CouponType;
   value: number;
   max_redemptions?: number;
@@ -25,6 +26,7 @@ const couponSchema = new Schema<CouponDoc>({
   code: { type: String, required: true, unique: true, uppercase: true, trim: true },
   stripe_coupon_id: String,
   ls_discount_code: String,
+  ls_discount_id: String,
   type: { type: String, enum: ["percentage", "fixed_amount", "free_trial", "free_months"], required: true },
   value: { type: Number, required: true },
   max_redemptions: Number,

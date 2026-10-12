@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { JsonLd } from "@/components/json-ld";
 import { FEATURES, PLANS } from "@/lib/plans";
+import { formatPrice } from "@/lib/price";
 import { CG_ENTITY_SENTENCE, breadcrumbLd } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -74,7 +75,11 @@ export default function ProductFactsPage() {
                 <th key={p.slug} className="py-2">
                   {p.label}
                   <span className="block font-normal">
-                    {p.priceMonthly === null ? p.priceNote : p.priceMonthly === 0 ? "$0" : `$${p.priceMonthly}/mo or $${p.priceYearly}/yr`}
+                    {p.priceMonthly === null
+                      ? p.priceNote
+                      : p.priceMonthly === 0
+                        ? formatPrice(0, p.currency)
+                        : `${formatPrice(p.priceMonthly, p.currency)}/mo or ${formatPrice(p.priceYearly ?? 0, p.currency)}/yr`}
                   </span>
                 </th>
               ))}

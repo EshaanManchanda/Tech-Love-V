@@ -98,7 +98,7 @@ describe("POST /api/webhooks/lemonsqueezy", () => {
         cert_limit: 0,
         bulk_cap: 0,
         activation_limit: 1,
-        ls_variant_monthly_usd: "1001",
+        ls_variant_monthly: "1001",
         cta_label: "Buy",
         cta_type: "checkout",
       }),
@@ -182,8 +182,8 @@ describe("POST /api/webhooks/lemonsqueezy", () => {
     const user = await makeUser();
     const product = await Product.create({ name: "Certificate Generator", slug: "certificate-generator" });
     const base = { product_id: product._id, billing_type: "recurring", cert_limit: 0, bulk_cap: 0, cta_label: "Buy", cta_type: "checkout" };
-    await Plan.create({ ...base, slug: "pro", name: "Pro", activation_limit: 1, ls_variant_monthly_usd: "1001" });
-    await Plan.create({ ...base, slug: "business", name: "Business", activation_limit: 5, ls_variant_monthly_inr: "2002" });
+    await Plan.create({ ...base, slug: "pro", name: "Pro", activation_limit: 1, ls_variant_monthly: "1001" });
+    await Plan.create({ ...base, slug: "business", name: "Business", activation_limit: 5, ls_variant_monthly: "2002" });
     await send(subscriptionEvent("subscription_created", user._id.toString()));
 
     await send(subscriptionEvent("subscription_updated", user._id.toString(), { variant_id: 2002, updated_at: iso(1) }));

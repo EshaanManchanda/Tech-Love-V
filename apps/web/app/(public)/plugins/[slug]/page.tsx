@@ -8,6 +8,7 @@ import { PlanCheckoutButton } from "@/components/plan-checkout-button";
 import { ProductPrimaryCta } from "@/components/product-primary-cta";
 import { API_URL } from "@/lib/api";
 import { CONTACT_URL } from "@/lib/plans";
+import { formatPrice } from "@/lib/price";
 import { OG_IMAGE, SITE_URL, breadcrumbLd } from "@/lib/site";
 
 interface PublicPlan {
@@ -17,6 +18,7 @@ interface PublicPlan {
   billing_type: "free" | "recurring" | "contact";
   price_monthly: number | null;
   price_yearly: number | null;
+  currency?: string;
   price_note?: string;
   activation_limit?: number;
   cta_label: string;
@@ -61,8 +63,8 @@ function metaDescription(product: PublicProduct): string {
 }
 
 function priceLabel(plan: PublicPlan): string {
-  if (plan.billing_type === "free") return "$0";
-  if (plan.price_monthly != null) return `$${plan.price_monthly}/mo`;
+  if (plan.billing_type === "free") return formatPrice(0, plan.currency);
+  if (plan.price_monthly != null) return `${formatPrice(plan.price_monthly, plan.currency)}/mo`;
   return plan.price_note ?? "Contact us";
 }
 
@@ -97,7 +99,7 @@ export default async function DynamicProductPage({ params }: { params: { slug: s
         "@type": "Offer",
         name: p.name,
         price: String(p.billing_type === "free" ? 0 : p.price_monthly),
-        priceCurrency: "USD",
+        priceCurrency: (p.currency ?? "inr").toUpperCase(),
         url: `${SITE_URL}${path}`,
       })),
     }),

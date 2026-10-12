@@ -21,8 +21,6 @@ checkoutRouter.post("/session", requireAuth, async (req, res) => {
       product: z.string().min(1).optional(), // omitted by older clients — inferred from the plan slug
       plan: z.string().min(1),
       billing_cycle: z.enum(["monthly", "yearly"]),
-      // The currency the buyer picked on the pricing page. With Lemon Squeezy both are charged in USD.
-      currency: z.enum(["usd", "inr"]).default("usd"),
       coupon_code: z.string().optional(),
     })
     .safeParse(req.body);
@@ -34,7 +32,7 @@ checkoutRouter.post("/session", requireAuth, async (req, res) => {
   if (!licensePlan) return res.status(400).json({ error: { code: "INVALID_INPUT", message: "That plan isn't available for checkout." } });
   let priceId: string;
   try {
-    priceId = priceIdFor(licensePlan, parsed.data.billing_cycle, providerName, parsed.data.currency);
+    priceId = priceIdFor(licensePlan, parsed.data.billing_cycle, providerName);
   } catch {
     return res.status(400).json({ error: { code: "PLAN_NOT_PURCHASABLE", message: `No ${parsed.data.billing_cycle} price is set up for this plan yet.` } });
   }

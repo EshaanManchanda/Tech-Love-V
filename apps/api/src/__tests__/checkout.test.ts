@@ -156,8 +156,7 @@ describe("POST /api/checkout/session â€” Lemon Squeezy", () => {
       cert_limit: 0,
       bulk_cap: 0,
       activation_limit: 1,
-      ls_variant_monthly_usd: "1001",
-      ls_variant_monthly_inr: "1002",
+      ls_variant_monthly: "1001",
       cta_label: "Subscribe",
       cta_type: "checkout",
     });
@@ -170,30 +169,28 @@ describe("POST /api/checkout/session â€” Lemon Squeezy", () => {
 
   const sentBody = () => JSON.parse(fetchMock.mock.calls[0][1].body as string).data;
 
-  it("creates a checkout for the INR variant with our ids in custom data", async () => {
+  it("creates a checkout for the plan's variant with our ids in custom data", async () => {
     const agent = await registerUser("LsBuyer");
 
-    const res = await agent.post("/api/checkout/session").send({ product: "certificate-generator", plan: "pro", billing_cycle: "monthly", currency: "inr" });
+    const res = await agent.post("/api/checkout/session").send({ product: "certificate-generator", plan: "pro", billing_cycle: "monthly" });
 
     expect(res.status).toBe(200);
     expect(res.body.url).toBe("https://shop.lemonsqueezy.com/checkout/abc");
     expect(fetchMock.mock.calls[0][0]).toBe("https://api.lemonsqueezy.com/v1/checkouts");
     const body = sentBody();
-    expect(body.relationships).toMatchObject({ store: { data: { id: "42" } }, variant: { data: { id: "1002" } } });
+    expect(body.relationships).toMatchObject({ store: { data: { id: "42" } }, variant: { data: { id: "1001" } } });
     expect(body.attributes.checkout_data.custom).toMatchObject({ product: "certificate-generator", plan: "pro", cycle: "monthly" });
     expect(body.attributes.checkout_data.custom.user_id).toBeTruthy();
     expect(stripeProvider.createCheckout).not.toHaveBeenCalled();
   });
 
-  it("defaults to the USD variant and passes a coupon as its discount code", async () => {
+  it("passes a coupon as its Lemon Squeezy discount code", async () => {
     const agent = await registerUser("LsBuyer2");
     await Coupon.create({ code: "LAUNCH10", ls_discount_code: "LAUNCH10", type: "percentage", value: 10, applicable_plans: ["pro"] });
 
     await agent.post("/api/checkout/session").send({ product: "certificate-generator", plan: "pro", billing_cycle: "monthly", coupon_code: "launch10" });
 
-    const body = sentBody();
-    expect(body.relationships.variant.data.id).toBe("1001");
-    expect(body.attributes.checkout_data.discount_code).toBe("LAUNCH10");
+    expect(sentBody().attributes.checkout_data.discount_code).toBe("LAUNCH10");
   });
 
   it("refuses a cycle with no variant set up", async () => {

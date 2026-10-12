@@ -83,11 +83,14 @@ export interface LsDiscountInput {
   durationInMonths?: number;
   maxRedemptions?: number;
   expiresAt?: Date;
+  /** Limits the code to these variants. A buyer can type a code straight into the LS checkout, so this is what really enforces it. */
+  variantIds?: string[];
 }
 
-/** Creates a discount code in the store; checkout applies it by code (checkout_data.discount_code). */
-export async function createLsDiscount(input: LsDiscountInput): Promise<void> {
-  await lsApi("POST", "/discounts", {
+/** Creates a discount code in the store; checkout applies it by code (checkout_data.discount_code). Returns the discount's id. */
+export async function createLsDiscount(input: LsDiscountInput): Promise<string> {
+  const limited = !!input.variantIds?.length;
+  const { data } = await lsApi("POST", "/discounts", {
     data: {
       type: "discounts",
       attributes: {
@@ -99,10 +102,20 @@ export async function createLsDiscount(input: LsDiscountInput): Promise<void> {
         ...(input.durationInMonths ? { duration_in_months: input.durationInMonths } : {}),
         ...(input.maxRedemptions ? { is_limited_redemptions: true, max_redemptions: input.maxRedemptions } : {}),
         ...(input.expiresAt ? { expires_at: input.expiresAt.toISOString() } : {}),
+        is_limited_to_products: limited,
       },
-      relationships: storeRelationship(),
+      relationships: {
+        ...storeRelationship(),
+        ...(limited ? { variants: { data: input.variantIds!.map((id) => ({ type: "variants", id })) } } : {}),
+      },
     },
   });
+  return data.id;
+}
+
+/** Deletes a discount so its code stops working at the LS checkout too. */
+export async function deleteLsDiscount(discountId: string): Promise<void> {
+  await lsApi("DELETE", `/discounts/${encodeURIComponent(discountId)}`);
 }
 
 async function changeVariant(subscriptionId: string, variantId: string, attributes: Record<string, unknown>): Promise<ProviderSubscription> {

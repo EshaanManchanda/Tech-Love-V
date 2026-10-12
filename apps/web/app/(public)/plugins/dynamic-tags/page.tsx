@@ -38,9 +38,9 @@ export default async function DynamicTagsPage() {
     url: `${SITE_URL}/plugins/dynamic-tags`,
     publisher: { "@id": `${SITE_URL}/#organization` },
     offers: [
-      { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
-      { "@type": "Offer", name: "Paid (monthly)", price: "2", priceCurrency: "USD", url: `${SITE_URL}/dynamic-tags/pricing` },
-      { "@type": "Offer", name: "Paid (yearly)", price: "19", priceCurrency: "USD", url: `${SITE_URL}/dynamic-tags/pricing` },
+      { "@type": "Offer", name: "Free", price: "0", priceCurrency: "INR" },
+      { "@type": "Offer", name: "Paid (monthly)", price: "149", priceCurrency: "INR", url: `${SITE_URL}/dynamic-tags/pricing` },
+      { "@type": "Offer", name: "Paid (yearly)", price: "1499", priceCurrency: "INR", url: `${SITE_URL}/dynamic-tags/pricing` },
     ],
   };
   return (
