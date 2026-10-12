@@ -18,7 +18,7 @@ function resolveEdition(req: Request): Edition {
   return req.query.edition === "pro" ? "pro" : "free";
 }
 
-async function currentVersion(slug: string, edition: Edition) {
+export async function currentVersion(slug: string, edition: Edition) {
   const product = await Product.findOne({ slug }).lean();
   // .lean() skips schema-default hydration — a product saved before `versions`
   // (or `edition`) existed has the field missing entirely, not defaulted.

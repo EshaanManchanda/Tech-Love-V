@@ -341,6 +341,23 @@ export const openApiSpec = {
         responses: { "200": { description: "OK", content: { "application/json": { schema: { $ref: "#/components/schemas/PluginValidationResponse" } } } } },
       },
     },
+    "/api/payments/update-check": {
+      post: {
+        summary: "Plugin: latest Pro version, with a package link for an active license on an activated site",
+        tags: ["Plugin (unauthenticated)"],
+        description: "Called by CG_Pro_Updater from WordPress's plugin update check. Returns { success, version, changelog, package? | message? }. The package link carries a signed 2-day token, never the license key.",
+        requestBody: { content: { "application/json": { schema: { properties: { license_key: {}, site_url: {} } } } } },
+        responses: { "200": { description: "OK" } },
+      },
+    },
+    "/api/payments/download": {
+      get: {
+        summary: "Plugin: download the current Pro ZIP with a token from update-check",
+        tags: ["Plugin (unauthenticated)"],
+        parameters: [{ name: "token", in: "query", required: true, schema: { type: "string" } }],
+        responses: { "200": { description: "The ZIP" }, "403": { description: "Bad or expired token, or the license is no longer active on that site" } },
+      },
+    },
     "/api/payments/verify-license": {
       post: {
         summary: "Plugin: read-only license check (defined for parity; not currently called by the plugin)",

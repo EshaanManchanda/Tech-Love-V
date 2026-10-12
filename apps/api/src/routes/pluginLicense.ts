@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { z } from "zod";
+import { License } from "../models/License.js";
+import { signDownloadToken, verifyDownloadToken } from "../services/authService.js";
 import { activateSite, checkLicense, checkSite, deactivateSite, recordUsage, type PlanLimits } from "../services/licenseService.js";
+import { currentVersion } from "./downloads.js";
 
 export const pluginLicenseRouter = Router();
 
@@ -41,6 +44,50 @@ pluginLicenseRouter.post("/check-remote", async (req, res) => {
 
   const result = await checkSite(parsed.data.license_key, parsed.data.site_url, { ip: req.ip });
   res.json(toBody(result));
+});
+
+// POST /api/payments/update-check — called by WordPress's plugin update check (CG_Pro_Updater).
+// Any known key learns the latest Pro version; only an active license on an activated
+// site gets a package link. The link carries a signed token, never the key, so the key
+// stays out of access logs.
+pluginLicenseRouter.post("/update-check", async (req, res) => {
+  const parsed = activateSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ success: false, message: "license_key and site_url are required" });
+
+  const license = await License.findOne({ license_key: parsed.data.license_key });
+  const version = license && (await currentVersion(license.product, "pro"));
+  if (!license || !version) return res.json({ success: false, message: "No update available for this key." });
+
+  const check = await checkSite(parsed.data.license_key, parsed.data.site_url, { ip: req.ip });
+  res.json({
+    success: true,
+    version: version.version,
+    changelog: version.changelog ?? "",
+    ...(check.valid
+      ? { package: `${req.protocol}://${req.get("host")}/api/payments/download?token=${encodeURIComponent(signDownloadToken(license._id.toString(), parsed.data.site_url))}` }
+      : { message: check.message }),
+  });
+});
+
+// GET /api/payments/download?token=… — the package link from update-check. Re-checks the license
+// and the site's activation, so a link stops working once either is gone.
+pluginLicenseRouter.get("/download", async (req, res) => {
+  let claim: { lic: string; site: string };
+  try {
+    claim = verifyDownloadToken(String(req.query.token ?? ""));
+  } catch {
+    return res.status(403).json({ success: false, message: "Download link is invalid or has expired." });
+  }
+
+  const license = await License.findById(claim.lic);
+  const check = license ? await checkSite(license.license_key, claim.site) : null;
+  if (!license || !check?.valid) return res.status(403).json({ success: false, message: "License is not active on this site." });
+
+  const version = await currentVersion(license.product, "pro");
+  if (!version) return res.status(404).json({ success: false, message: "Plugin package not available." });
+  res.download(version.zip_path, version.zip_filename, (err) => {
+    if (err && !res.headersSent) res.status(404).json({ success: false, message: "Plugin package not available." });
+  });
 });
 
 // POST /api/payments/verify-license — read-only parity endpoint (not yet called by the plugin, kept for CG_Backend_API::verify_license())
