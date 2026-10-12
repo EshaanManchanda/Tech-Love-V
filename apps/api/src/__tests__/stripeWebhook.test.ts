@@ -160,6 +160,28 @@ describe("invoice.paid", () => {
   });
 });
 
+describe("invoice.payment_failed", () => {
+  it("marks the Subscription past_due and leaves the License alone", async () => {
+    const user = await User.create({ name: "Declined", email: "declined@example.com", password_hash: "x", role: "customer" });
+    vi.mocked(stripe.webhooks.constructEvent).mockReturnValue(checkoutCompletedEvent("evt_failed_checkout", user._id.toString()) as never);
+    await request(app).post("/api/webhooks/stripe").type("application/json").set("stripe-signature", "test").send("{}");
+
+    const licenseBefore = await License.findOne({ user_id: user._id });
+    vi.mocked(stripe.webhooks.constructEvent).mockReturnValue({
+      id: "evt_payment_failed",
+      type: "invoice.payment_failed",
+      data: { object: { subscription: "sub_123" } },
+    } as never);
+    await request(app).post("/api/webhooks/stripe").type("application/json").set("stripe-signature", "test").send("{}");
+
+    const subscription = await Subscription.findOne({ provider_subscription_id: "sub_123" });
+    const licenseAfter = await License.findById(licenseBefore!._id);
+    expect(subscription!.status).toBe("past_due");
+    expect(licenseAfter!.status).toBe("active");
+    expect(licenseAfter!.expires_at).toBe(licenseBefore!.expires_at);
+  });
+});
+
 describe("customer.subscription.deleted", () => {
   it("marks the Subscription cancelled but leaves the License's status/expiry untouched", async () => {
     const user = await User.create({ name: "Canceller", email: "canceller@example.com", password_hash: "x", role: "customer" });

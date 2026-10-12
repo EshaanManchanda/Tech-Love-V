@@ -138,6 +138,19 @@ stripeWebhookRouter.post("/", async (req, res) => {
       break;
     }
 
+    case "invoice.payment_failed": {
+      // Stripe retries the charge and emails the customer itself. The license keeps
+      // its paid-through expires_at; a later invoice.paid sets the Subscription back
+      // to active, and running out of retries ends in customer.subscription.deleted.
+      const invoice = event.data.object as Stripe.Invoice;
+      if (!invoice.subscription) break;
+      await Subscription.updateOne(
+        { provider_subscription_id: invoice.subscription as string },
+        { status: "past_due", updated_at: new Date() },
+      );
+      break;
+    }
+
     case "customer.subscription.deleted": {
       const subscription = event.data.object as Stripe.Subscription;
       await Subscription.updateOne(
