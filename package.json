@@ -11,5 +11,10 @@
     "dev:worker": "npm run dev -w apps/worker",
     "test:api": "npm run test -w apps/api",
     "build:sdk": "npm run build -w packages/sdk"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "^8.5.29"
+    }
   }
 }
