@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api";
 import { useUser } from "@/lib/useUser";
 
-// Starts Stripe checkout for any product's plan — the API resolves the price
+// Starts checkout (Lemon Squeezy or Stripe, whichever the API is set to) for any product's plan — the API resolves the price
 // from the Plan document, so this works for products added in the admin CMS.
 export function PlanCheckoutButton({ product, plan, label, className }: { product: string; plan: string; label: string; className: string }) {
   const router = useRouter();

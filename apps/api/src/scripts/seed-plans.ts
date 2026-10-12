@@ -67,6 +67,9 @@ const PLANS: Omit<import("../models/Plan.js").PlanDoc, "_id" | "product_id">[] =
     billing_type: "recurring",
     price_monthly: 3.5,
     price_yearly: 35,
+    // Shown when a buyer picks INR; charged in USD through the India variants (set in Admin → Products).
+    price_monthly_inr: 249,
+    price_yearly_inr: 2999,
     currency: "usd",
     cert_limit: 0,
     bulk_cap: 0,

@@ -12,6 +12,8 @@ export interface PlanCopy {
   label: string;
   priceMonthly: number | null;
   priceYearly: number | null;
+  priceMonthlyInr?: number | null; // display only; checkout charges USD
+  priceYearlyInr?: number | null;
   priceNote?: string; // e.g. "Contact for pricing"
   certLimit: string; // "Unlimited" on every plan since the free plugin dropped its caps (7.6)
   bulkCap: string;
@@ -34,6 +36,8 @@ export const PLANS: PlanCopy[] = [
     label: "Pro",
     priceMonthly: 3.5,
     priceYearly: 35,
+    priceMonthlyInr: 249,
+    priceYearlyInr: 2999,
     certLimit: "Unlimited",
     bulkCap: "Unlimited",
     cta: { label: "Subscribe", type: "checkout" },
@@ -96,6 +100,8 @@ export interface DtPlanCopy {
   label: string;
   priceMonthly: number | null;
   priceYearly: number | null;
+  priceMonthlyInr?: number | null; // display only; checkout charges USD
+  priceYearlyInr?: number | null;
   cta: { label: string; type: "checkout" | "register" };
   highlight?: boolean;
 }

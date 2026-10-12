@@ -10,6 +10,8 @@ import { DT_FEATURES, DT_PLANS, type DtFeatureRow, type DtPlanCopy } from "@/lib
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckoutConsent } from "@/components/legal-page";
+import { CurrencyToggle, InrChargeNote } from "@/components/currency-toggle";
+import { formatPrice, useCurrency } from "@/lib/currency";
 
 interface PlanCompareResponse {
   plans: DtPlanCopy[];
@@ -29,6 +31,7 @@ export default function DynamicTagsPricingPage() {
   const { data: user } = useUser();
   const [cycle, setCycle] = useState<Cycle>("monthly");
   const [loading, setLoading] = useState(false);
+  const [currency, setCurrency] = useCurrency();
 
   const { data } = useQuery<PlanCompareResponse>({
     queryKey: ["plans", "compare", "dynamic-tags"],
@@ -44,6 +47,16 @@ export default function DynamicTagsPricingPage() {
   const free = plans.find((p) => p.slug === "free")!;
   const paid = plans.find((p) => p.slug === "paid")!;
 
+  // The toggle only appears once INR prices are set for this plan in Admin → Products.
+  const hasInr = paid.priceMonthlyInr != null || paid.priceYearlyInr != null;
+  const inrPrice = cycle === "monthly" ? paid.priceMonthlyInr : paid.priceYearlyInr;
+  const payInr = currency === "inr" && inrPrice != null;
+  const usdPrice = cycle === "monthly" ? paid.priceMonthly : paid.priceYearly;
+  // The yearly saving in whichever currency is shown; hidden when yearly isn't actually cheaper.
+  const shownMonthly = currency === "inr" && paid.priceMonthlyInr != null ? paid.priceMonthlyInr : paid.priceMonthly;
+  const shownYearly = currency === "inr" && paid.priceYearlyInr != null ? paid.priceYearlyInr : paid.priceYearly;
+  const yearlySaving = shownMonthly && shownYearly ? Math.round((1 - shownYearly / (shownMonthly * 12)) * 100) : 0;
+
   async function subscribe() {
     if (!user) {
       router.push("/login?next=/dynamic-tags/pricing");
@@ -53,7 +66,7 @@ export default function DynamicTagsPricingPage() {
     try {
       const { url } = await api<{ url: string }>("/api/checkout/session", {
         method: "POST",
-        body: JSON.stringify({ product: "dynamic-tags", plan: "paid", billing_cycle: cycle }),
+        body: JSON.stringify({ product: "dynamic-tags", plan: "paid", billing_cycle: cycle, currency: payInr ? "inr" : "usd" }),
       });
       window.location.href = url;
     } finally {
@@ -67,7 +80,7 @@ export default function DynamicTagsPricingPage() {
       <h1 className="mt-4 text-center font-display text-3xl font-bold text-slate-900">Dynamic Tags Plans</h1>
       <p className="mt-2 text-center text-slate-600">Free is a complete merge-tag engine on its own. Paid unlocks the full dynamic-data layer.</p>
 
-      <div className="mt-6 flex justify-center gap-2">
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
         <button
           onClick={() => setCycle("monthly")}
           className={`rounded-md px-3 py-1.5 text-sm ${cycle === "monthly" ? "bg-indigo-600 text-white" : "bg-slate-100"}`}
@@ -78,8 +91,9 @@ export default function DynamicTagsPricingPage() {
           onClick={() => setCycle("yearly")}
           className={`rounded-md px-3 py-1.5 text-sm ${cycle === "yearly" ? "bg-indigo-600 text-white" : "bg-slate-100"}`}
         >
-          Yearly (save ~21%)
+          Yearly{yearlySaving > 0 ? ` (save ~${yearlySaving}%)` : ""}
         </button>
+        {hasInr && <CurrencyToggle currency={currency} onChange={setCurrency} />}
       </div>
 
       <div className="mt-10 grid gap-6 sm:grid-cols-2">
@@ -87,7 +101,7 @@ export default function DynamicTagsPricingPage() {
           <CardContent className="pt-6">
             <span className="inline-block rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">Free forever</span>
             <h2 className="mt-3 text-lg font-semibold">{free.label}</h2>
-            <p className="mt-2 text-3xl font-bold">$0</p>
+            <p className="mt-2 text-3xl font-bold">{formatPrice(0, payInr ? "inr" : "usd")}</p>
             <p className="mt-4 text-sm text-slate-600">Up to 15 dynamic tags, no license key needed.</p>
             <a href="/register?download=dynamic-tags">
               <Button className="mt-6 w-full bg-slate-100 text-slate-900 hover:bg-slate-200">{free.cta.label}</Button>
@@ -100,14 +114,15 @@ export default function DynamicTagsPricingPage() {
             <span className="inline-block rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">Unlocks everything</span>
             <h2 className="mt-3 text-lg font-semibold">{paid.label}</h2>
             <p className="mt-2 text-3xl font-bold">
-              ${cycle === "monthly" ? paid.priceMonthly : paid.priceYearly}
+              {payInr ? formatPrice(inrPrice!, "inr") : usdPrice != null ? formatPrice(usdPrice, "usd") : null}
               <span className="text-base font-normal text-slate-500">/{cycle === "monthly" ? "mo" : "yr"}</span>
             </p>
+            {payInr && <InrChargeNote amount={inrPrice!} />}
             <p className="mt-4 text-sm text-slate-600">Unlimited dynamic tags, one site per key.</p>
             <Button onClick={subscribe} disabled={loading} className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700">
               {loading ? "Redirecting…" : paid.cta.label}
             </Button>
-              <CheckoutConsent />
+            <CheckoutConsent />
           </CardContent>
         </Card>
       </div>

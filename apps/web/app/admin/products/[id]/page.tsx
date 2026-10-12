@@ -35,6 +35,12 @@ interface AdminPlan {
   activation_limit?: number;
   stripe_price_monthly?: string;
   stripe_price_yearly?: string;
+  ls_variant_monthly_usd?: string;
+  ls_variant_yearly_usd?: string;
+  ls_variant_monthly_inr?: string;
+  ls_variant_yearly_inr?: string;
+  price_monthly_inr?: number | null;
+  price_yearly_inr?: number | null;
   license_key_prefix?: string;
   cta_label: string;
   cta_type: "register" | "checkout" | "contact";
@@ -102,7 +108,7 @@ function DetailsTab({ product, onSaved }: { product: AdminProduct; onSaved: () =
 const CTA_FOR_BILLING: Record<AdminPlan["billing_type"], AdminPlan["cta_type"]> = { free: "register", recurring: "checkout", contact: "contact" };
 
 // Create a plan, or edit one when `plan` is given. Paid plans carry everything
-// licensing needs — activation limit, Stripe price ids and the key prefix — so
+// licensing needs — activation limit, Lemon Squeezy variant ids and the key prefix — so
 // a brand-new product can be sold and licensed without a code change.
 function PlanDialog({ productId, plan, onSaved }: { productId: string; plan?: AdminPlan; onSaved: () => void }) {
   const [open, setOpen] = useState(false);
@@ -115,6 +121,12 @@ function PlanDialog({ productId, plan, onSaved }: { productId: string; plan?: Ad
     activationLimit: plan?.activation_limit ? String(plan.activation_limit) : "1",
     stripeMonthly: plan?.stripe_price_monthly ?? "",
     stripeYearly: plan?.stripe_price_yearly ?? "",
+    priceMonthlyInr: plan?.price_monthly_inr?.toString() ?? "",
+    priceYearlyInr: plan?.price_yearly_inr?.toString() ?? "",
+    lsMonthlyUsd: plan?.ls_variant_monthly_usd ?? "",
+    lsYearlyUsd: plan?.ls_variant_yearly_usd ?? "",
+    lsMonthlyInr: plan?.ls_variant_monthly_inr ?? "",
+    lsYearlyInr: plan?.ls_variant_yearly_inr ?? "",
     keyPrefix: plan?.license_key_prefix ?? "",
     ctaLabel: plan?.cta_label ?? "Subscribe",
   });
@@ -135,6 +147,12 @@ function PlanDialog({ productId, plan, onSaved }: { productId: string; plan?: Ad
           activation_limit: paid ? Number(form.activationLimit) || 1 : 0,
           stripe_price_monthly: form.stripeMonthly.trim() || undefined,
           stripe_price_yearly: form.stripeYearly.trim() || undefined,
+          price_monthly_inr: form.priceMonthlyInr ? Number(form.priceMonthlyInr) : null,
+          price_yearly_inr: form.priceYearlyInr ? Number(form.priceYearlyInr) : null,
+          ls_variant_monthly_usd: form.lsMonthlyUsd.trim() || undefined,
+          ls_variant_yearly_usd: form.lsYearlyUsd.trim() || undefined,
+          ls_variant_monthly_inr: form.lsMonthlyInr.trim() || undefined,
+          ls_variant_yearly_inr: form.lsYearlyInr.trim() || undefined,
           license_key_prefix: form.keyPrefix.trim(),
           cta_label: form.ctaLabel,
           cta_type: CTA_FOR_BILLING[form.billingType],
@@ -172,7 +190,7 @@ function PlanDialog({ productId, plan, onSaved }: { productId: string; plan?: Ad
             <Label htmlFor="plan-billing">Billing type</Label>
             <select id="plan-billing" className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.billingType} onChange={set("billingType")}>
               <option value="free">Free (no license key)</option>
-              <option value="recurring">Recurring (Stripe checkout)</option>
+              <option value="recurring">Recurring (checkout)</option>
               <option value="contact">Contact us (licenses issued by admin)</option>
             </select>
           </div>
@@ -180,25 +198,53 @@ function PlanDialog({ productId, plan, onSaved }: { productId: string; plan?: Ad
             <>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label htmlFor="plan-monthly">Price / month</Label>
+                  <Label htmlFor="plan-monthly">Price / month (USD)</Label>
                   <Input id="plan-monthly" type="number" min={0} step="0.01" value={form.priceMonthly} onChange={set("priceMonthly")} className="mt-1" />
                 </div>
                 <div>
-                  <Label htmlFor="plan-yearly">Price / year</Label>
+                  <Label htmlFor="plan-yearly">Price / year (USD)</Label>
                   <Input id="plan-yearly" type="number" min={0} step="0.01" value={form.priceYearly} onChange={set("priceYearly")} className="mt-1" />
                 </div>
+                <div>
+                  <Label htmlFor="plan-monthly-inr">Price / month (INR, shown only)</Label>
+                  <Input id="plan-monthly-inr" type="number" min={0} step="1" value={form.priceMonthlyInr} onChange={set("priceMonthlyInr")} className="mt-1" placeholder="e.g. 249" />
+                </div>
+                <div>
+                  <Label htmlFor="plan-yearly-inr">Price / year (INR, shown only)</Label>
+                  <Input id="plan-yearly-inr" type="number" min={0} step="1" value={form.priceYearlyInr} onChange={set("priceYearlyInr")} className="mt-1" placeholder="e.g. 2999" />
+                </div>
               </div>
+              <p className="pt-2 text-sm font-medium">Lemon Squeezy variant ids</p>
+              <div className="grid grid-cols-2 gap-3">
+                {(
+                  [
+                    ["lsMonthlyUsd", "Monthly, USD"],
+                    ["lsYearlyUsd", "Yearly, USD"],
+                    ["lsMonthlyInr", "Monthly, India"],
+                    ["lsYearlyInr", "Yearly, India"],
+                  ] as const
+                ).map(([key, label]) => (
+                  <div key={key}>
+                    <Label htmlFor={`plan-${key}`}>{label}</Label>
+                    <Input id={`plan-${key}`} value={form[key]} onChange={set(key)} className="mt-1 font-mono text-xs" placeholder="e.g. 123456" />
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Lemon Squeezy charges in USD only, so the India variants are USD prices that come to about the INR price above. A
+                cycle/currency can&apos;t be bought until its variant id is set.
+              </p>
+              <p className="pt-2 text-sm font-medium">Stripe price ids (only used when PAYMENT_PROVIDER=stripe)</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label htmlFor="plan-stripe-monthly">Stripe price id (monthly)</Label>
+                  <Label htmlFor="plan-stripe-monthly">Monthly</Label>
                   <Input id="plan-stripe-monthly" value={form.stripeMonthly} onChange={set("stripeMonthly")} className="mt-1 font-mono text-xs" placeholder="price_…" />
                 </div>
                 <div>
-                  <Label htmlFor="plan-stripe-yearly">Stripe price id (yearly)</Label>
+                  <Label htmlFor="plan-stripe-yearly">Yearly</Label>
                   <Input id="plan-stripe-yearly" value={form.stripeYearly} onChange={set("stripeYearly")} className="mt-1 font-mono text-xs" placeholder="price_…" />
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground">Checkout stays disabled for a billing cycle until its Stripe price id is set.</p>
             </>
           )}
           {paid && (

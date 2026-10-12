@@ -37,7 +37,7 @@ export default function BillingPage() {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        Payment methods, invoices, and plan changes are all handled in Stripe's secure billing portal — click "Manage billing" above.
+        Payment methods, invoices, and plan changes are all handled in the Lemon Squeezy customer portal — click "Manage billing" above.
       </p>
 
       {isLoading && (

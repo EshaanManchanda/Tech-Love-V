@@ -10,6 +10,8 @@ import { CONTACT_URL, FEATURES, PLANS, type FeatureRow, type PlanCopy } from "@/
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckoutConsent } from "@/components/legal-page";
+import { CurrencyToggle, InrChargeNote } from "@/components/currency-toggle";
+import { formatPrice, useCurrency } from "@/lib/currency";
 
 interface PlanCompareResponse {
   plans: PlanCopy[];
@@ -23,8 +25,9 @@ const faqs = [
   { q: "What does Pro add?", a: "Pro is a small add-on plugin installed next to the free one. It auto-issues certificates from Tutor LMS, LearnDash, LifterLMS, Sensei LMS, LearnPress and WooCommerce (including past completions), and adds the REST API, custom .ttf font upload, the school bulk ZIP shortcode and priority support." },
   { q: "Do I need the free plugin to use Pro?", a: "Yes. Install and activate Certificate Generator (free) first, then upload the Pro add-on from your dashboard's Downloads page and activate your license key under Settings → License." },
   { q: "How many sites can one license activate?", a: "Pro activates 1 site; Business activates up to 5. Deactivate a site from your dashboard to free up a slot. The free plugin works on any number of sites." },
-  { q: "Can I cancel or change my plan anytime?", a: "Yes. Use Manage Billing on your dashboard to open the Stripe billing portal and update or cancel your subscription. If Pro lapses, the free plugin keeps working with all your certificates." },
+  { q: "Can I cancel or change my plan anytime?", a: "Yes. Use Manage Billing on your dashboard to open the Lemon Squeezy customer portal and update or cancel your subscription. If Pro lapses, the free plugin keeps working with all your certificates." },
   { q: "Monthly or yearly?", a: "Pro is $3.5/month or $35/year — the yearly plan is two months free." },
+  { q: "Can I pay in rupees?", a: "Pick INR on this page for India pricing: ₹249/month or ₹2,999/year. Payments are processed by Lemon Squeezy, which charges in US dollars, so the card is charged the USD equivalent and your bank converts it." },
 ];
 
 function cell(value: boolean | string) {
@@ -38,6 +41,7 @@ export default function PricingPage() {
   const { data: user } = useUser();
   const [cycle, setCycle] = useState<Cycle>("monthly");
   const [loading, setLoading] = useState(false);
+  const [currency, setCurrency] = useCurrency();
 
   const { data } = useQuery<PlanCompareResponse>({
     queryKey: ["plans", "compare"],
@@ -54,6 +58,15 @@ export default function PricingPage() {
   const business = plans.find((p) => p.slug === "business")!;
   const free = plans.find((p) => p.slug === "free")!;
 
+  // INR only where the plan has an INR price; checkout then uses the India variant.
+  const inrPrice = cycle === "monthly" ? pro.priceMonthlyInr : pro.priceYearlyInr;
+  const payInr = currency === "inr" && inrPrice != null;
+  const usdPrice = cycle === "monthly" ? pro.priceMonthly : pro.priceYearly;
+  // The yearly saving in whichever currency is shown; hidden when yearly isn't actually cheaper.
+  const shownMonthly = currency === "inr" && pro.priceMonthlyInr != null ? pro.priceMonthlyInr : pro.priceMonthly;
+  const shownYearly = currency === "inr" && pro.priceYearlyInr != null ? pro.priceYearlyInr : pro.priceYearly;
+  const yearlySaving = shownMonthly && shownYearly ? Math.round((1 - shownYearly / (shownMonthly * 12)) * 100) : 0;
+
   async function subscribePro() {
     if (!user) {
       router.push("/login?next=/certificate-generator/pricing");
@@ -63,7 +76,7 @@ export default function PricingPage() {
     try {
       const { url } = await api<{ url: string }>("/api/checkout/session", {
         method: "POST",
-        body: JSON.stringify({ product: "certificate-generator", plan: "pro", billing_cycle: cycle }),
+        body: JSON.stringify({ product: "certificate-generator", plan: "pro", billing_cycle: cycle, currency: payInr ? "inr" : "usd" }),
       });
       window.location.href = url;
     } finally {
@@ -77,7 +90,7 @@ export default function PricingPage() {
       <h1 className="mt-4 text-center font-display text-3xl font-bold text-slate-900">Certificate Generator Plans</h1>
       <p className="mt-2 text-center text-slate-600">Compare Free, Pro, and Business to find the right fit.</p>
 
-      <div className="mt-6 flex justify-center gap-2">
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
         <button
           onClick={() => setCycle("monthly")}
           className={`rounded-md px-3 py-1.5 text-sm ${cycle === "monthly" ? "bg-indigo-600 text-white" : "bg-slate-100"}`}
@@ -88,8 +101,9 @@ export default function PricingPage() {
           onClick={() => setCycle("yearly")}
           className={`rounded-md px-3 py-1.5 text-sm ${cycle === "yearly" ? "bg-indigo-600 text-white" : "bg-slate-100"}`}
         >
-          Yearly (save ~17%)
+          Yearly{yearlySaving > 0 ? ` (save ~${yearlySaving}%)` : ""}
         </button>
+        <CurrencyToggle currency={currency} onChange={setCurrency} />
       </div>
 
       <div className="mt-10 grid gap-6 sm:grid-cols-3">
@@ -98,7 +112,7 @@ export default function PricingPage() {
           <CardContent className="pt-6">
             <span className="inline-block rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-medium text-emerald-700">Free forever</span>
             <h2 className="mt-3 text-lg font-semibold">{free.label}</h2>
-            <p className="mt-2 text-3xl font-bold">$0</p>
+            <p className="mt-2 text-3xl font-bold">{formatPrice(0, payInr ? "inr" : "usd")}</p>
             <p className="mt-4 text-sm text-slate-600">No account or license key needed.</p>
             <ul className="mt-2 space-y-1 text-sm text-slate-600">
               <li>Unlimited certificates, emails and CSV imports</li>
@@ -117,9 +131,10 @@ export default function PricingPage() {
             <span className="inline-block rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700">Most popular</span>
             <h2 className="mt-3 text-lg font-semibold">{pro.label}</h2>
             <p className="mt-2 text-3xl font-bold">
-              ${cycle === "monthly" ? pro.priceMonthly : pro.priceYearly}
+              {payInr ? formatPrice(inrPrice!, "inr") : usdPrice != null ? formatPrice(usdPrice, "usd") : null}
               <span className="text-base font-normal text-slate-500">/{cycle === "monthly" ? "mo" : "yr"}</span>
             </p>
+            {payInr && <InrChargeNote amount={inrPrice!} />}
             <p className="mt-4 text-sm text-slate-600">Everything in Free, plus:</p>
             <ul className="mt-2 space-y-1 text-sm text-slate-600">
               <li>Auto-issue from Tutor LMS, LearnDash, LifterLMS, Sensei, LearnPress and WooCommerce</li>
@@ -129,7 +144,7 @@ export default function PricingPage() {
             <Button onClick={subscribePro} disabled={loading} className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700">
               {loading ? "Redirecting…" : pro.cta.label}
             </Button>
-              <CheckoutConsent />
+            <CheckoutConsent />
           </CardContent>
         </Card>
 
