@@ -1,88 +1,54 @@
-# Stripe → Lemon Squeezy migration plan
+# Stripe → Lemon Squeezy migration
+
+**Status:** built on `feat/lemonsqueezy` (2026-10-12). Setup steps: `DEPLOY-HOSTINGER.md` §8.
 
 **Why:** the seller is an individual in India selling worldwide. Lemon Squeezy (LS) is merchant of record: it is the legal seller,
-collects and remits VAT / sales tax / GST, and issues invoices. The legal pages (`/terms`, `/privacy`, `/refund-policy`) already say
-so and must ship **together with** this migration.
+collects and remits VAT / sales tax / GST, and issues invoices. The legal pages (`/terms`, `/privacy`, `/refund-policy`) say so and
+ship in the same release.
 
-**Decisions (2026-10-12):** pre-launch, no live Stripe subscribers · keep Stripe behind `PAYMENT_PROVIDER` for rollback · hosted
-checkout via redirect (no lemon.js overlay) · keep our coupon system, mapped to LS discount codes.
+**Decisions:** pre-launch, no live Stripe subscribers · Stripe kept behind `PAYMENT_PROVIDER` for rollback · hosted checkout via
+redirect · our coupons map to LS discount codes · buyers pick USD or INR, both charged in USD (LS has one store currency); INR uses
+separately priced "India" variants (Pro ≈ ₹249/month, ₹2,999/year).
 
-**Unchanged:** our DB stays the source of truth for licenses (never LS's own license-key feature). Licenses, activations, the plugin
-endpoints and the plugin itself don't change.
+Our DB stays the source of truth for licenses; LS's own license-key feature isn't used. Licenses, activations, the plugin endpoints
+and the plugin don't change.
 
-## 1. Provider selection
-- `services/payments/index.ts`: `getPaymentProvider()` returns `lemonSqueezyProvider` or `stripeProvider` from
-  `PAYMENT_PROVIDER` (default `lemonsqueezy` in prod `.env`, `stripe` kept for tests/rollback).
-- `checkout.ts` and the billing portal call `getPaymentProvider()` instead of importing `stripeProvider`.
+## What's where
 
-## 2. `lemonsqueezy.provider.ts` (replace the throwing scaffold)
-Plain `fetch` against `https://api.lemonsqueezy.com/v1` (JSON:API; headers `Authorization: Bearer $LEMONSQUEEZY_API_KEY`,
-`Accept`/`Content-Type: application/vnd.api+json`). No SDK needed.
-- `createCheckout` → `POST /checkouts` with `store_id` (`LEMONSQUEEZY_STORE_ID`), `variant_id` (= our "price id"),
-  `checkout_data: { email, discount_code?, custom: { user_id, product, plan, coupon_id? } }`,
-  `product_options: { redirect_url: successUrl }`. Return `data.attributes.url`. (LS has no cancel URL; the back link returns to the
-  store, acceptable.)
-- `getSubscription` → `GET /subscriptions/:id`; map `renews_at`/`ends_at`, `status`, `variant_id`, `cancelled`.
-- `createPortal(customerId)` → `GET /customers/:id`, return `data.attributes.urls.customer_portal` (signed, short-lived: fetch on
-  every click, never store).
-- `cancelSubscription` → `DELETE /subscriptions/:id` (LS cancels at period end); `resumeSubscription` → `PATCH cancelled:false`;
-  `upgrade/downgradeSubscription` → `PATCH variant_id` (with `invoice_immediately` for upgrades).
-- `verifyWebhook(raw, sig)` → HMAC-SHA256 hex of the raw body with `LEMONSQUEEZY_WEBHOOK_SECRET`, `timingSafeEqual` against the
-  `X-Signature` header; returns the parsed JSON.
-- `PaymentProvider.ts`: rename `stripeCustomerId` → `providerCustomerId` in `CreateCheckoutParams`; update the doc comment.
-
-## 3. Webhook: `routes/lemonSqueezyWebhook.ts`
-Mount at `/api/webhooks/lemonsqueezy` with `express.raw()` before `express.json()` (as Stripe is in `app.ts`). Event name from
-`meta.event_name`, our ids from `meta.custom_data`. Share license logic with the Stripe route by moving it into
-`services/billingService.ts` (`onSubscriptionStarted`, `onRenewed`, `onPaymentFailed`, `onCancelled`, `onRefunded`), so both
-webhooks are thin adapters.
-
-| LS event | Action |
+| Piece | File |
 |---|---|
-| `subscription_created` | upsert Subscription, create License (`expires_at` = `renews_at` date), email the key, record coupon redemption. Store `customer_id` on the user. |
-| `subscription_payment_success` | renewal: fetch the subscription, move `expires_at` to the new `renews_at`, status active. (Skip the first invoice: `billing_reason: "initial"`.) |
-| `subscription_payment_failed` | Subscription → `past_due` (LS retries and emails the customer). |
-| `subscription_payment_recovered` | Subscription → `active`. |
-| `subscription_cancelled` | Subscription `cancel_at_period_end=true`; license runs to its paid-through date. |
-| `subscription_resumed` | clear `cancel_at_period_end`. |
-| `subscription_expired` | Subscription → `cancelled`/`expired`. |
-| `subscription_updated` | sync plan/variant changes (upgrade/downgrade): update License `plan` + `activation_limit`. |
-| `order_refunded`, `subscription_payment_refunded` | **new:** License `status: "cancelled"` (the refund policy promises this), Subscription cancelled. |
+| Provider choice (`PAYMENT_PROVIDER`, default `stripe`) | `apps/api/src/services/payments/index.ts` |
+| LS REST client: checkout, portal, cancel/resume/plan change, discounts, signature check | `services/payments/lemonsqueezy.provider.ts` |
+| Webhook (`/api/webhooks/lemonsqueezy`) | `routes/lemonSqueezyWebhook.ts` |
+| License bookkeeping shared by both webhooks | `services/billingService.ts` |
+| Variant lookup by cycle × currency | `config/plans.ts` `priceIdFor()` / `planForPriceId()` |
+| Pricing-page currency toggle, geo default | `apps/web/lib/currency.ts`, `components/currency-toggle.tsx`, `app/api/geo/route.ts` |
 
-Idempotency: LS sends no event id. Dedupe on `sha256(event_name + data.id + data.attributes.updated_at)` in `WebhookEvent`
-(rename `stripe_event_id` → `event_id`, add `provider`; keep a unique index).
+## Data
 
-## 4. Models
-- `User`: add `provider_customer_id` (+ `payment_provider`); keep `stripe_customer_id` for legacy reads.
-- `Subscription.provider`: enum `["stripe", "lemonsqueezy"]`.
-- `Plan`: add `ls_variant_monthly` / `ls_variant_yearly`; `config/plans.ts` `priceIdFor()` and `planForPriceId()` pick the field by
-  provider.
-- `Coupon`: add `provider_coupon_code` (the LS discount code). `checkout.ts` passes it as `discount_code`.
+- `Plan`: `ls_variant_{monthly,yearly}_{usd,inr}`, `price_{monthly,yearly}_inr` (display only).
+- `Subscription.provider`: `"stripe" | "lemonsqueezy"`; `provider_order_id` (LS order, used for `order_refunded`).
+- `User.lemonsqueezy_customer_id` (next to `stripe_customer_id`); the billing portal prefers the active provider's account.
+- `Coupon.ls_discount_code`; `stripe_coupon_id` is now optional.
+- `WebhookEvent.stripe_event_id` holds every provider's event id (LS ids are `ls_<sha256>` of event name + object id +
+  `updated_at`, since LS sends no event id). Not renamed, so the existing unique index keeps working.
 
-## 5. Admin + web
-- Admin → Products: LS variant id inputs next to the Stripe price ids (`adminProducts.ts`, `admin/products/[id]/page.tsx`).
-- Admin → Coupons (`admin.ts` ~l.406): with LS, create the discount via `POST /discounts` (or accept a code already made in LS);
-  drop the Stripe-only `free_trial/free_months` branch for LS.
-- `dashboard/billing/page.tsx` copy: "Stripe's secure billing portal" → "Lemon Squeezy's customer portal"; `plan-checkout-button.tsx`
-  comment.
-- `CheckoutConsent` already says "Payments are processed by Lemon Squeezy".
+## Webhook events
 
-## 6. Lemon Squeezy dashboard setup (manual)
-1. Store → Products: one product per plugin, a **subscription variant** per plan × cycle (Pro monthly/yearly, Business, DT paid).
-   Copy each variant id into Admin → Products.
-2. Settings → Webhooks: URL `https://tlvapi.techlovev.in/api/webhooks/lemonsqueezy`, signing secret, subscribe the events in §3.
-3. Settings → API: create a key. Env on the API server: `PAYMENT_PROVIDER=lemonsqueezy`, `LEMONSQUEEZY_API_KEY`,
-   `LEMONSQUEEZY_STORE_ID`, `LEMONSQUEEZY_WEBHOOK_SECRET`. Add to `apps/api/.env.example`, README, DEPLOY-HOSTINGER.md.
-4. Make sure the store is activated (identity verification + payout details), or checkouts stay in test mode.
+| LS event | Effect |
+|---|---|
+| `subscription_created` | Subscription + License (expires at `renews_at`), key emailed, coupon redemption, customer id stored. User from `custom_data.user_id`, else the buyer's email. |
+| `subscription_updated` / `_cancelled` / `_resumed` / `_expired` / `_paused` / `_unpaused` | Status synced; license runs to `renews_at` (or `ends_at` once cancelled); variant change → plan + seat limit change. |
+| `subscription_payment_success` / `_recovered` | Fetch the subscription, sync as above (renewal). |
+| `subscription_payment_failed` | Subscription `past_due`; license keeps its date (plugin's 3-day grace covers a quick retry). |
+| `subscription_payment_refunded`, `order_refunded` (full refunds only) | License and Subscription `cancelled`; LS subscription cancelled so it doesn't renew. Later updates don't revive it. |
 
-## 7. Tests
-- `__tests__/lemonSqueezyWebhook.test.ts`: signature reject, each event row above (mock `fetch` for `GET /subscriptions/:id`),
-  dedupe, refund cancels the license.
-- `checkout.test.ts`: with `PAYMENT_PROVIDER=lemonsqueezy`, asserts the `POST /checkouts` body (variant, custom data, discount code).
-- Existing Stripe tests run with `PAYMENT_PROVIDER=stripe`, unchanged.
+A handler error un-records the event so LS's retry is processed.
 
-## 8. Rollout
-1. Build + tests, deploy API (PM2) with `PAYMENT_PROVIDER=lemonsqueezy` and LS in **test mode**; buy Pro with a test card; confirm
-   license email, plugin activation, cancel, refund → plugin drops to Free at next heartbeat.
-2. Commit the legal pages + web copy in the same release (Vercel).
-3. Switch the LS store to live.
+## Before going live
+
+1. LS dashboard setup (`DEPLOY-HOSTINGER.md` §8), `PAYMENT_PROVIDER=lemonsqueezy` + `LEMONSQUEEZY_*` in `apps/api/.env`, `pm2 restart api`.
+2. Re-run `seed-plans.ts` so Pro has its INR display prices.
+3. Test mode end to end: buy Pro (USD and INR) with a test card → license email → activate in the plugin → cancel → refund →
+   the site drops to Free at the next heartbeat.
+4. Deploy web (Vercel) with the legal pages, then switch the store to live.

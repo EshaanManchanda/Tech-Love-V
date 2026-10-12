@@ -60,7 +60,11 @@ Real Mongo, not an in-memory DB — `vitest.config.ts` runs test files serially
 In wp-admin: Settings → Certificate Generator → License tab → set "License Server URL" to
 `http://localhost:4000`. No plugin code changes needed.
 
-## Stripe
+## Payments
+
+Production takes payments through **Lemon Squeezy** (merchant of record) with `PAYMENT_PROVIDER=lemonsqueezy`;
+setup is in `DEPLOY-HOSTINGER.md` §8. Buyers pick USD or INR; both are charged in USD, INR through
+India-priced variants. Stripe stays available as a fallback (`PAYMENT_PROVIDER=stripe`, the default when unset):
 
 Only the **Pro** plan is sold through Stripe Checkout — `/pricing` sends Business customers to
 a "Contact us" link instead, matching the plugin's own pricing page.

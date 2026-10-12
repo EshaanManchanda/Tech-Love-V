@@ -91,7 +91,8 @@ cp apps/worker/.env.example apps/worker/.env
 | `APP_URL` | `https://app.example.com`. This is the **web** domain: the CORS allow-list, links in emails, and Stripe's success/cancel pages all use it. It must match the browser's origin exactly, with no trailing slash. |
 | `COOKIE_DOMAIN` | `.example.com`. Note the leading dot. See the note at the top. |
 | `REDIS_URL` | `rediss://default:<password>@<host>:<port>`. `rediss://` (TLS), not `redis://`. |
-| `STRIPE_*` | See §8. |
+| `PAYMENT_PROVIDER`, `LEMONSQUEEZY_*` | See §8. |
+| `STRIPE_*` | Only for `PAYMENT_PROVIDER=stripe`; see §8, "Stripe (fallback)". |
 
 `apps/worker/.env`:
 
@@ -169,7 +170,33 @@ npx tsx src/scripts/set-user-role.ts you@example.com admin
 
 Log in, then open `https://app.example.com/admin`, or use the account menu → "Switch to admin portal".
 
-## 8. Stripe
+## 8. Lemon Squeezy (payments)
+
+Lemon Squeezy is merchant of record: it is the seller, charges and pays VAT/sales tax/GST, and issues
+invoices. `PAYMENT_PROVIDER=lemonsqueezy` in `apps/api/.env` sends new checkouts and the billing portal there.
+
+1. **Activate the store.** Lemon Squeezy → Settings → Stores: finish identity verification and payout details,
+   or checkouts stay in test mode.
+2. **Create the products.** One product per plugin, and a **subscription variant** per plan, cycle and
+   currency. Lemon Squeezy charges in one store currency (USD), so the "India" variants are USD prices that come
+   to about the INR price (e.g. Pro monthly ≈ ₹249, yearly ≈ ₹2,999).
+3. **Enter the variant ids.** Admin → Products → (product) → Plans → **Edit** → the four Lemon Squeezy variant
+   ids (monthly/yearly × USD/India) and the INR display prices. A cycle/currency can't be bought until its
+   variant id is set.
+4. **API key and store id.** Settings → API → new key into `LEMONSQUEEZY_API_KEY`; the store's number (Settings
+   → Stores) into `LEMONSQUEEZY_STORE_ID`.
+5. **Add the webhook.** Settings → Webhooks → `https://api.example.com/api/webhooks/lemonsqueezy` with a
+   signing secret (copy it into `LEMONSQUEEZY_WEBHOOK_SECRET`). Select `subscription_created`,
+   `subscription_updated`, `subscription_cancelled`, `subscription_resumed`, `subscription_expired`,
+   `subscription_paused`, `subscription_unpaused`, `subscription_payment_success`,
+   `subscription_payment_failed`, `subscription_payment_recovered`, `subscription_payment_refunded` and
+   `order_refunded`. Then run `pm2 restart api`.
+6. **Coupons.** Admin → Coupons creates the matching Lemon Squeezy discount code (percentage, fixed amount
+   or free months). Free trials are set on the variant in Lemon Squeezy instead.
+
+### Stripe (fallback)
+
+Only needed with `PAYMENT_PROVIDER=stripe`. The Stripe webhook stays mounted either way.
 
 1. **Add the live key.** Stripe Dashboard → **live mode** → Developers → API keys. Copy the secret key into
    `apps/api/.env` as `STRIPE_SECRET_KEY`, then run `pm2 restart api`.

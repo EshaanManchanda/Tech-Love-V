@@ -24,7 +24,7 @@ Two completely separate trust boundaries share this API:
 |---|---|---|
 | Auth | `/api/auth/*` | none → cookie |
 | Plans | `/api/plans/*` | none (public pricing data) |
-| Billing | `/api/checkout`, `/api/billing`, `/api/webhooks/stripe` | cookie / Stripe signature |
+| Billing | `/api/checkout`, `/api/billing`, `/api/webhooks/lemonsqueezy`, `/api/webhooks/stripe` | cookie / provider signature |
 | Licenses | `/api/licenses/*` | cookie |
 | Subscriptions | `/api/subscriptions/*` | cookie |
 | Organizations | `/api/organizations/*` | cookie |

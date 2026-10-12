@@ -41,8 +41,8 @@ dev-safe default (e.g. no `RESEND_API_KEY` → emails log to console instead of 
   plugin is *also* updated to sign them. This needs a coordinated two-sided change (plugin +
   platform), not something this repo can do alone. Tracked in `docs/API.md`'s plugin-contract
   section.
-- **Razorpay / Lemon Squeezy payment providers**: scaffolded as interface-only stubs
-  (`apps/api/src/services/payments/`) that throw if called. Stripe is the only live provider.
+- **Razorpay payment provider**: scaffolded as an interface-only stub (`apps/api/src/services/payments/`)
+  that throws if called. Lemon Squeezy (production) and Stripe (fallback) are live, chosen by `PAYMENT_PROVIDER`.
 
 ## Structured logging
 
