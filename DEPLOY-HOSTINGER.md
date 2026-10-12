@@ -182,7 +182,7 @@ Log in, then open `https://app.example.com/admin`, or use the account menu → "
    prefix. No env vars or restart needed. Checkout for a billing cycle stays disabled until its price ID is set.
 4. **Add the webhook.** Stripe Dashboard → Developers → Webhooks → Add endpoint →
    `https://api.example.com/api/webhooks/stripe`. Select the events `checkout.session.completed`,
-   `invoice.paid` and `customer.subscription.deleted`. Copy the signing secret into `STRIPE_WEBHOOK_SECRET`,
+   `invoice.paid`, `invoice.payment_failed` and `customer.subscription.deleted`. Copy the signing secret into `STRIPE_WEBHOOK_SECRET`,
    then run `pm2 restart api`.
 
 ## 9. Upload plugin releases

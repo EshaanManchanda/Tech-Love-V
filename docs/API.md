@@ -61,6 +61,7 @@ valid even if a plugin install ever falls back to that path.
 `customer.subscription.deleted` intentionally does **not** touch the `License` — expiry rides
 out to the already-set `expires_at` (MERN plan's "never break existing certificates" rule).
 Don't "fix" this into instant revocation.
+`invoice.payment_failed` only marks the `Subscription` `past_due`; the `License` is left alone the same way.
 
 ## Client SDK
 

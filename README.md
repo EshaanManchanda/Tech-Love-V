@@ -70,7 +70,7 @@ npm run stripe:setup-prices -w apps/api   # creates the $3.5/mo · $35/yr Pro Pr
 ```
 
 Then set `STRIPE_PRICE_PRO_MONTHLY` / `STRIPE_PRICE_PRO_YEARLY` in `apps/api/.env`, and point a
-webhook at `POST /api/webhooks/stripe` for `checkout.session.completed`, `invoice.paid`,
+webhook at `POST /api/webhooks/stripe` for `checkout.session.completed`, `invoice.paid`, `invoice.payment_failed`,
 `customer.subscription.deleted`.
 
 ## Production
