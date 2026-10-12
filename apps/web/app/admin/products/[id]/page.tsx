@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { api, apiUpload, ApiError } from "@/lib/api";
@@ -473,10 +474,12 @@ function VersionsTab({ productId }: { productId: string }) {
   );
 }
 
-export default function AdminProductDetailPage({ params }: { params: { id: string } }) {
+export default function AdminProductDetailPage() {
+  // Next 15 passes `params` to pages as a Promise; a client page reads the route with useParams instead.
+  const { id } = useParams<{ id: string }>();
   const { data: product, isLoading, refetch } = useQuery<AdminProduct>({
-    queryKey: ["admin", "products", params.id],
-    queryFn: () => api(`/api/admin/products/${params.id}`),
+    queryKey: ["admin", "products", id],
+    queryFn: () => api(`/api/admin/products/${id}`),
   });
 
   if (isLoading || !product) {

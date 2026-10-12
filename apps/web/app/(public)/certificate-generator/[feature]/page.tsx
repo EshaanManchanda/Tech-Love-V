@@ -13,8 +13,11 @@ export function generateStaticParams() {
   return CG_FEATURES.map((f) => ({ feature: f.slug }));
 }
 
-export function generateMetadata({ params }: { params: { feature: string } }): Metadata {
-  const f = getCgFeature(params.feature);
+// Next 15: route params arrive as a Promise.
+type Props = { params: Promise<{ feature: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const f = getCgFeature((await params).feature);
   if (!f) return {};
   const path = `/certificate-generator/${f.slug}`;
   return {
@@ -25,8 +28,8 @@ export function generateMetadata({ params }: { params: { feature: string } }): M
   };
 }
 
-export default function FeaturePage({ params }: { params: { feature: string } }) {
-  const f = getCgFeature(params.feature);
+export default async function FeaturePage({ params }: Props) {
+  const f = getCgFeature((await params).feature);
   if (!f) return notFound();
   const related = f.related.map(getCgFeature).filter((r) => r !== undefined);
 

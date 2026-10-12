@@ -5,7 +5,7 @@ import { PortalShell } from "@/components/portal-shell";
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 async function getMe(): Promise<{ _id: string; name: string; email: string; role: "customer" | "admin" } | null> {
-  const res = await fetch(`${API_URL}/api/auth/me`, { headers: { cookie: cookies().toString() }, cache: "no-store" });
+  const res = await fetch(`${API_URL}/api/auth/me`, { headers: { cookie: (await cookies()).toString() }, cache: "no-store" });
   if (!res.ok) return null;
   return res.json();
 }

@@ -13,8 +13,11 @@ export function generateStaticParams() {
   return CG_DOCS.map((d) => ({ topic: d.slug }));
 }
 
-export function generateMetadata({ params }: { params: { topic: string } }): Metadata {
-  const d = getCgDoc(params.topic);
+// Next 15: route params arrive as a Promise.
+type Props = { params: Promise<{ topic: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const d = getCgDoc((await params).topic);
   if (!d) return {};
   const path = `/docs/certificate-generator/${d.slug}`;
   return {
@@ -25,8 +28,8 @@ export function generateMetadata({ params }: { params: { topic: string } }): Met
   };
 }
 
-export default function DocTopicPage({ params }: { params: { topic: string } }) {
-  const d = getCgDoc(params.topic);
+export default async function DocTopicPage({ params }: Props) {
+  const d = getCgDoc((await params).topic);
   if (!d) return notFound();
   const i = CG_DOCS.indexOf(d);
   const prev = CG_DOCS[i - 1];

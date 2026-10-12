@@ -68,17 +68,21 @@ function priceLabel(plan: PublicPlan): string {
   return plan.price_note ?? "Contact us";
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const product = await getProduct(params.slug);
+// Next 15: route params arrive as a Promise.
+type Props = { params: Promise<{ slug: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getProduct(slug);
   if (!product) return {};
   const title = `${product.name} — WordPress Plugin`;
   const description = metaDescription(product);
-  const path = `/plugins/${params.slug}`;
+  const path = `/plugins/${slug}`;
   return { title, description, alternates: { canonical: path }, openGraph: { images: [OG_IMAGE], title, description, url: path } };
 }
 
-export default async function DynamicProductPage({ params }: { params: { slug: string } }) {
-  const product = await getProduct(params.slug);
+export default async function DynamicProductPage({ params }: Props) {
+  const product = await getProduct((await params).slug);
   if (!product) return notFound();
   const path = `/plugins/${product.slug}`;
 
