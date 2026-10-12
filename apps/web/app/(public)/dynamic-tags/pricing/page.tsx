@@ -42,7 +42,8 @@ export default function DynamicTagsPricingPage() {
   // Falls back to local defaults not just while loading, but also if the live
   // catalog comes back empty (e.g. seed-plans.ts hasn't been run against this
   // DB yet) — an empty array is truthy, so `?? DT_PLANS` alone wouldn't catch it.
-  const plans = data?.plans?.length ? data.plans : DT_PLANS;
+  // An API that doesn't send `currency` predates INR pricing and still has dollar amounts — use the built-in plans then.
+  const plans = data?.plans?.length && data.plans.every((p) => p.currency) ? data.plans : DT_PLANS;
   const features = data?.features?.length ? data.features : DT_FEATURES;
 
   const free = plans.find((p) => p.slug === "free")!;
