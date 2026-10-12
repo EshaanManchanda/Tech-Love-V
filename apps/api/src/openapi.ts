@@ -325,9 +325,18 @@ export const openApiSpec = {
 
     "/api/payments/activate-remote": {
       post: {
-        summary: "Plugin: activate/heartbeat a site (unauthenticated, rate-limited 60/min per the doc's design)",
+        summary: "Plugin: activate a site, taking a seat (unauthenticated, rate-limited 60/min per the doc's design)",
         tags: ["Plugin (unauthenticated)"],
-        description: "Called by CG_License_Manager::remote_validate() — both the initial activation and the twice-daily heartbeat hit this same endpoint.",
+        description: "Called by CG_License_Manager::remote_validate() on activation. Plugin builds before the check-remote heartbeat also use it for the twice-daily heartbeat.",
+        requestBody: { content: { "application/json": { schema: { properties: { license_key: {}, site_url: {} } } } } },
+        responses: { "200": { description: "OK", content: { "application/json": { schema: { $ref: "#/components/schemas/PluginValidationResponse" } } } } },
+      },
+    },
+    "/api/payments/check-remote": {
+      post: {
+        summary: "Plugin: heartbeat for an already-activated site (never takes a seat)",
+        tags: ["Plugin (unauthenticated)"],
+        description: "Called by CG_License_Manager::heartbeat(). Returns status \"deactivated\" when the site has no activation (e.g. it was removed in the dashboard).",
         requestBody: { content: { "application/json": { schema: { properties: { license_key: {}, site_url: {} } } } } },
         responses: { "200": { description: "OK", content: { "application/json": { schema: { $ref: "#/components/schemas/PluginValidationResponse" } } } } },
       },

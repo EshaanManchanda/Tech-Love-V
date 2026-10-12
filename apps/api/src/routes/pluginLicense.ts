@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
-import { activateSite, checkLicense, deactivateSite, recordUsage, type PlanLimits } from "../services/licenseService.js";
+import { activateSite, checkLicense, checkSite, deactivateSite, recordUsage, type PlanLimits } from "../services/licenseService.js";
 
 export const pluginLicenseRouter = Router();
 
@@ -30,6 +30,16 @@ pluginLicenseRouter.post("/activate-remote", async (req, res) => {
   if (!parsed.success) return res.status(400).json({ success: false, message: "license_key and site_url are required" });
 
   const result = await activateSite(parsed.data.license_key, parsed.data.site_url, { ip: req.ip });
+  res.json(toBody(result));
+});
+
+// POST /api/payments/check-remote — called by CG_License_Manager::heartbeat(). Unlike
+// activate-remote it never takes a seat, so a site removed in the dashboard stays removed.
+pluginLicenseRouter.post("/check-remote", async (req, res) => {
+  const parsed = activateSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ success: false, message: "license_key and site_url are required" });
+
+  const result = await checkSite(parsed.data.license_key, parsed.data.site_url, { ip: req.ip });
   res.json(toBody(result));
 });
 

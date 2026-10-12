@@ -158,6 +158,28 @@ export async function activateSite(licenseKey: string, siteUrl: string, meta: { 
   return siteExpiresAt ? { ...result, expiry: siteExpiresAt.toISOString().slice(0, 10) } : result;
 }
 
+export type CheckSiteResult = ValidationResult | { valid: false; status: "deactivated"; message: string };
+
+/**
+ * Heartbeat check: like activateSite, but never creates an activation. A site
+ * removed from the dashboard therefore stays removed instead of silently
+ * re-taking a seat on its next heartbeat.
+ */
+export async function checkSite(licenseKey: string, siteUrl: string, meta: { ip?: string } = {}): Promise<CheckSiteResult> {
+  const { license, result } = await checkLicense(licenseKey, siteUrl);
+  if (!license || !result.valid) return result;
+
+  const existing = await Activation.findOne({ license_id: license._id, site_url: normalizeSiteUrl(siteUrl) });
+  if (!existing) {
+    return { valid: false, status: "deactivated", message: "This site is not activated for this license." };
+  }
+
+  existing.last_check_at = new Date();
+  if (meta.ip) existing.ip = meta.ip;
+  await existing.save();
+  return result;
+}
+
 export async function deactivateSite(licenseKey: string, siteUrl: string): Promise<{ success: boolean }> {
   const license = await License.findOne({ license_key: licenseKey });
   if (!license) return { success: true }; // nothing to deactivate — respond success either way (matches plugin's fire-and-forget expectations)

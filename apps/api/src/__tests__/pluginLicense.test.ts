@@ -164,6 +164,58 @@ describe("Dynamic Tags product", () => {
   });
 });
 
+describe("POST /api/payments/check-remote", () => {
+  const check = (license_key: string, site_url = "https://a.example.com") =>
+    request(app).post("/api/payments/check-remote").send({ license_key, site_url });
+
+  it("returns valid for an activated site and touches last_check_at", async () => {
+    const license = await makeLicense();
+    await request(app).post("/api/payments/activate-remote").send({ license_key: license.license_key, site_url: "https://a.example.com" });
+    await Activation.updateOne({ license_id: license._id }, { last_check_at: new Date(0) });
+
+    const res = await check(license.license_key);
+
+    expect(res.body).toMatchObject({ valid: true, status: "active", plan: "pro", expiry: "2099-01-01" });
+    const activation = await Activation.findOne({ license_id: license._id });
+    expect(activation!.last_check_at!.getTime()).toBeGreaterThan(0);
+  });
+
+  it("reports deactivated after a dashboard removal and does not take the seat back", async () => {
+    const license = await makeLicense({ activation_limit: 1 });
+    await request(app).post("/api/payments/activate-remote").send({ license_key: license.license_key, site_url: "https://a.example.com" });
+    await Activation.deleteOne({ license_id: license._id }); // what POST /api/licenses/:id/deactivate does
+
+    const res = await check(license.license_key);
+
+    expect(res.body).toMatchObject({ valid: false, status: "deactivated" });
+    expect(await Activation.countDocuments({ license_id: license._id })).toBe(0);
+  });
+
+  it("never activates a site that was not activated before", async () => {
+    const license = await makeLicense();
+
+    const res = await check(license.license_key);
+
+    expect(res.body).toMatchObject({ valid: false, status: "deactivated" });
+    expect(await Activation.countDocuments({ license_id: license._id })).toBe(0);
+  });
+
+  it("reports expired and invalid keys the same way activate-remote does", async () => {
+    const expired = await makeLicense({ expires_at: "2000-01-01" });
+
+    expect((await check(expired.license_key)).body).toMatchObject({ valid: false, status: "expired" });
+    expect((await check("CG-DOES-NOT-EXIST")).body).toMatchObject({ valid: false, status: "invalid" });
+  });
+
+  it("uses the per-site expiry of a trial", async () => {
+    const license = await makeLicense({ license_type: "trial", activation_limit: 2 });
+    await request(app).post("/api/payments/activate-remote").send({ license_key: license.license_key, site_url: "https://a.example.com" });
+    await Activation.updateOne({ license_id: license._id }, { expires_at: new Date(Date.now() - 24 * 60 * 60 * 1000) });
+
+    expect((await check(license.license_key)).body).toMatchObject({ valid: false, status: "expired" });
+  });
+});
+
 describe("POST /api/payments/deactivate-remote", () => {
   it("frees up an activation slot", async () => {
     const license = await makeLicense({ activation_limit: 1 });
