@@ -34,6 +34,19 @@ const STATUS: Record<LsSubscriptionStatus, SubscriptionStatus> = {
 };
 const PAID_THROUGH: LsSubscriptionStatus[] = ["on_trial", "active", "cancelled"];
 
+/**
+ * LS marks a refund "full" (refunded: true) only to the paisa, but refunding the whole ₹248.72 of an INR order came
+ * back as a "partial_refund" of ₹247.77: LS caps the refundable amount below the total (currency conversion).
+ * So 95% or more of the order counts as the full refund our 7-day policy gives.
+ */
+const FULL_REFUND_SHARE = 0.95;
+function isFullRefund(attrs: Record<string, unknown>): boolean {
+  if (attrs.refunded === true) return true;
+  const total = Number(attrs.total);
+  const refunded = Number(attrs.refunded_amount);
+  return total > 0 && refunded >= total * FULL_REFUND_SHARE;
+}
+
 function periodStartFor(periodEnd: Date, cycle: BillingCycle): Date {
   const start = new Date(periodEnd);
   if (cycle === "yearly") start.setUTCFullYear(start.getUTCFullYear() - 1);
@@ -151,16 +164,16 @@ async function handle(event: LsWebhook) {
       );
       break;
 
-    // Partial refunds leave the license alone; a full refund cancels it.
+    // A full refund cancels the license; a genuinely partial one (e.g. goodwill credit) leaves it alone.
     case "subscription_payment_refunded": {
-      if (attributes.refunded !== true) break;
+      if (!isFullRefund(attributes)) break;
       const subscription = await Subscription.findOne({ provider_subscription_id: String(attributes.subscription_id) });
       if (subscription) await refundSubscription(subscription);
       break;
     }
 
     case "order_refunded": {
-      if (attributes.refunded !== true) break;
+      if (!isFullRefund(attributes)) break;
       const subscription = await Subscription.findOne({ provider: "lemonsqueezy", provider_order_id: id });
       if (!subscription) break;
       await refundSubscription(subscription);

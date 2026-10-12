@@ -172,10 +172,24 @@ describe("POST /api/webhooks/lemonsqueezy", () => {
 
     await send({
       meta: { event_name: "order_refunded", custom_data: {} },
-      data: { type: "orders", id: "555", attributes: { refunded: false, refunded_amount: 100, updated_at: iso(1) } },
+      data: { type: "orders", id: "555", attributes: { refunded: false, total: 24872, refunded_amount: 12400, updated_at: iso(1) } },
     });
 
     expect((await License.findOne({ user_id: user._id }))!.status).toBe("active");
+  });
+
+  it("refunding what LS allows of an INR order counts as full, though LS calls it partial", async () => {
+    // Seen in test mode: a ₹248.72 order refunded at LS's maximum came back as partial_refund of ₹247.77.
+    const user = await makeUser();
+    await send(subscriptionEvent("subscription_created", user._id.toString()));
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+    await send({
+      meta: { event_name: "order_refunded", custom_data: {} },
+      data: { type: "orders", id: "555", attributes: { status: "partial_refund", refunded: false, total: 24872, refunded_amount: 24777, updated_at: iso(1) } },
+    });
+
+    expect((await License.findOne({ user_id: user._id }))!.status).toBe("cancelled");
   });
 
   it("a plan change at Lemon Squeezy follows onto the license", async () => {
