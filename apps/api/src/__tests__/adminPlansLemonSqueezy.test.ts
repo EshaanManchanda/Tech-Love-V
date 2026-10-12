@@ -22,6 +22,7 @@ const VARIANTS: Record<string, object> = {
   "5002": { name: "Pro yearly", price: 249900, is_subscription: true, interval: "year", status: "published" },
 };
 const fetchMock = vi.fn(async (url: string) => {
+  if (url.includes("/stores/")) return new Response(JSON.stringify({ data: { id: "42", attributes: { currency: "INR" } } }));
   const id = url.split("/").pop()!;
   return VARIANTS[id]
     ? new Response(JSON.stringify({ data: { id, attributes: VARIANTS[id] } }))
@@ -74,6 +75,19 @@ describe("admin plan Lemon Squeezy variant ids are checked on save", () => {
 
     expect(swapped.body.error.message).toMatch(/isn't a monthly subscription/);
     expect(priced.body.error.message).toMatch(/costs 249 in Lemon Squeezy but the monthly price here is 199/);
+  });
+
+  it("refuses a USD plan on an INR store, and accepts switching it to INR", async () => {
+    // What production had: rupee amounts and variants, but the plan still marked "usd", so the site showed $249.
+    await Plan.updateOne({ _id: planId }, { currency: "usd" });
+
+    const usd = await save({ ls_variant_monthly: "5001" });
+    const inr = await save({ ls_variant_monthly: "5001", currency: "INR" });
+
+    expect(usd.status).toBe(400);
+    expect(usd.body.error.message).toMatch(/currency is USD, but your Lemon Squeezy store charges in INR/);
+    expect(inr.status).toBe(200);
+    expect(inr.body.currency).toBe("inr");
   });
 
   it("saves matching variants, and an emptied field clears the id", async () => {

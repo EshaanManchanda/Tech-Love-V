@@ -106,6 +106,11 @@ function DetailsTab({ product, onSaved }: { product: AdminProduct; onSaved: () =
 
 const CTA_FOR_BILLING: Record<AdminPlan["billing_type"], AdminPlan["cta_type"]> = { free: "register", recurring: "checkout", contact: "contact" };
 
+const CURRENCIES = [
+  { code: "inr", label: "INR (₹), Indian rupee" },
+  { code: "usd", label: "USD ($), US dollar" },
+] as const;
+
 // Create a plan, or edit one when `plan` is given. Paid plans carry everything
 // licensing needs — activation limit, Lemon Squeezy variant ids and the key prefix — so
 // a brand-new product can be sold and licensed without a code change.
@@ -117,6 +122,7 @@ function PlanDialog({ productId, plan, onSaved }: { productId: string; plan?: Ad
     billingType: plan?.billing_type ?? ("recurring" as AdminPlan["billing_type"]),
     priceMonthly: plan?.price_monthly?.toString() ?? "",
     priceYearly: plan?.price_yearly?.toString() ?? "",
+    currency: plan?.currency ?? "inr",
     activationLimit: plan?.activation_limit ? String(plan.activation_limit) : "1",
     stripeMonthly: plan?.stripe_price_monthly ?? "",
     stripeYearly: plan?.stripe_price_yearly ?? "",
@@ -139,6 +145,7 @@ function PlanDialog({ productId, plan, onSaved }: { productId: string; plan?: Ad
           billing_type: form.billingType,
           price_monthly: form.priceMonthly ? Number(form.priceMonthly) : null,
           price_yearly: form.priceYearly ? Number(form.priceYearly) : null,
+          currency: form.currency,
           activation_limit: paid ? Number(form.activationLimit) || 1 : 0,
           stripe_price_monthly: form.stripeMonthly.trim() || undefined,
           stripe_price_yearly: form.stripeYearly.trim() || undefined,
@@ -186,15 +193,28 @@ function PlanDialog({ productId, plan, onSaved }: { productId: string; plan?: Ad
               <option value="contact">Contact us (licenses issued by admin)</option>
             </select>
           </div>
+          <div>
+            <Label htmlFor="plan-currency">Currency</Label>
+            <select id="plan-currency" className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.currency} onChange={set("currency")}>
+              {CURRENCIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-muted-foreground">
+              What the pricing page shows. With Lemon Squeezy it must be your store&apos;s currency (INR), the one checkout charges in.
+            </p>
+          </div>
           {form.billingType === "recurring" && (
             <>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label htmlFor="plan-monthly">Price / month ({(plan?.currency ?? "inr").toUpperCase()})</Label>
+                  <Label htmlFor="plan-monthly">Price / month ({form.currency.toUpperCase()})</Label>
                   <Input id="plan-monthly" type="number" min={0} step="0.01" value={form.priceMonthly} onChange={set("priceMonthly")} className="mt-1" />
                 </div>
                 <div>
-                  <Label htmlFor="plan-yearly">Price / year ({(plan?.currency ?? "inr").toUpperCase()})</Label>
+                  <Label htmlFor="plan-yearly">Price / year ({form.currency.toUpperCase()})</Label>
                   <Input id="plan-yearly" type="number" min={0} step="0.01" value={form.priceYearly} onChange={set("priceYearly")} className="mt-1" />
                 </div>
               </div>

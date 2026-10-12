@@ -10,7 +10,7 @@ import { requireAdmin, requireAuth } from "../middleware/auth.js";
 import { Plan } from "../models/Plan.js";
 import { Product } from "../models/Product.js";
 import { audit } from "../services/auditService.js";
-import { getLsVariant } from "../services/payments/lemonsqueezy.provider.js";
+import { getLsStoreCurrency, getLsVariant } from "../services/payments/lemonsqueezy.provider.js";
 
 export const adminProductsRouter = Router();
 adminProductsRouter.use(requireAuth, requireAdmin);
@@ -138,7 +138,12 @@ const planSchema = z.object({
   price_monthly: z.number().nullable().optional(),
   price_yearly: z.number().nullable().optional(),
   price_note: z.string().optional(),
-  currency: z.string().optional(),
+  // ISO 4217 code, stored lowercase like the rest ("inr").
+  currency: z
+    .string()
+    .regex(/^[A-Za-z]{3}$/, "Currency must be a 3-letter code such as INR")
+    .transform((c) => c.toLowerCase())
+    .optional(),
   cert_limit: z.number().int().min(0),
   bulk_cap: z.number().int().min(0),
   activation_limit: z.number().int().min(0).optional(),
@@ -155,7 +160,8 @@ const planSchema = z.object({
 
 /**
  * A typo'd variant id only shows up when a customer clicks Subscribe, so check it on save: it must exist in the
- * store, be a subscription with the right interval, and cost what the plan says the site shows.
+ * store, be a subscription with the right interval, and cost what the plan says the site shows, in the store's
+ * currency (a USD label on rupee variants would show "$249" for a ₹249 charge).
  * Skipped when no Lemon Squeezy key is configured (e.g. tests, or a Stripe-only deploy).
  */
 async function lemonSqueezyVariantProblem(plan: {
@@ -163,8 +169,16 @@ async function lemonSqueezyVariantProblem(plan: {
   ls_variant_yearly?: string;
   price_monthly?: number | null;
   price_yearly?: number | null;
+  currency?: string;
 }): Promise<string | null> {
   if (!process.env.LEMONSQUEEZY_API_KEY) return null;
+  if (plan.ls_variant_monthly?.trim() || plan.ls_variant_yearly?.trim()) {
+    const store = await getLsStoreCurrency();
+    const planCurrency = (plan.currency ?? "inr").toLowerCase();
+    if (planCurrency !== store) {
+      return `This plan's currency is ${planCurrency.toUpperCase()}, but your Lemon Squeezy store charges in ${store.toUpperCase()}. Set the currency to ${store.toUpperCase()}.`;
+    }
+  }
   const checks = [
     { id: plan.ls_variant_monthly, interval: "month", price: plan.price_monthly, label: "monthly" },
     { id: plan.ls_variant_yearly, interval: "year", price: plan.price_yearly, label: "yearly" },

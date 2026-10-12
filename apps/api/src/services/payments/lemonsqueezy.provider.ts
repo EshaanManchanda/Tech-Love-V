@@ -75,6 +75,19 @@ export async function getLsSubscription(subscriptionId: string): Promise<LsSubsc
   return data.attributes as unknown as LsSubscriptionAttributes;
 }
 
+let storeCurrency: Promise<string> | null = null;
+
+/** The store's currency, lowercase ("inr"). Every variant is priced and charged in it. Fetched once per process. */
+export function getLsStoreCurrency(): Promise<string> {
+  storeCurrency ??= lsApi("GET", `/stores/${encodeURIComponent(String(process.env.LEMONSQUEEZY_STORE_ID ?? ""))}`)
+    .then(({ data }) => String(data.attributes.currency).toLowerCase())
+    .catch((err) => {
+      storeCurrency = null; // don't cache a failure
+      throw err;
+    });
+  return storeCurrency;
+}
+
 export interface LsVariant {
   id: string;
   name: string;
