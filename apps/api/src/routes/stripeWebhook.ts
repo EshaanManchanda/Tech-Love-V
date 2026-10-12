@@ -1,15 +1,11 @@
 import { Router } from "express";
 import type Stripe from "stripe";
-import { planForPriceId, resolveLicensePlan } from "../config/plans.js";
-import { Coupon } from "../models/Coupon.js";
-import { CouponRedemption } from "../models/CouponRedemption.js";
+import { planForPriceId } from "../config/plans.js";
 import { License } from "../models/License.js";
-import { Subscription, type BillingCycle } from "../models/Subscription.js";
+import { Subscription } from "../models/Subscription.js";
 import { User } from "../models/User.js";
 import { WebhookEvent } from "../models/WebhookEvent.js";
-import { generateLicenseKey } from "../services/licenseService.js";
-import { findPrimaryOrganization } from "../services/organizationService.js";
-import { enqueueEmail } from "../queues/emailQueue.js";
+import { startSubscription } from "../services/billingService.js";
 import { stripeProvider } from "../services/payments/stripe.provider.js";
 import { stripe } from "../services/stripeClient.js";
 
@@ -31,7 +27,7 @@ stripeWebhookRouter.post("/", async (req, res) => {
 
   // Idempotency: duplicate Stripe delivery of the same event must not double-create a license (doc §48).
   try {
-    await WebhookEvent.create({ stripe_event_id: event.id, type: event.type });
+    await WebhookEvent.create({ stripe_event_id: event.id, provider: "stripe", type: event.type });
   } catch {
     return res.status(200).json({ received: true, deduped: true });
   }
@@ -46,67 +42,24 @@ stripeWebhookRouter.post("/", async (req, res) => {
       const priceId = subscription.items.data[0]?.price.id;
       const fromMetadata = session.metadata?.product && session.metadata?.plan ? { product: session.metadata.product, plan: session.metadata.plan } : null;
       const target = fromMetadata ?? (priceId ? await planForPriceId(priceId) : null);
-      const licensePlan = target ? await resolveLicensePlan(target.product, target.plan) : null;
-      if (!licensePlan) break;
-      const { plan, product } = licensePlan;
+      if (!target) break;
 
-      const user = await User.findById(userId);
-      if (!user) break;
-
-      if (session.customer && !user.stripe_customer_id) {
-        user.stripe_customer_id = session.customer as string;
-        await user.save();
-      }
-
-      const organization = await findPrimaryOrganization(user._id);
-      const cycle: BillingCycle = subscription.items.data[0]?.price.recurring?.interval === "year" ? "yearly" : "monthly";
-
-      const subDoc = await Subscription.findOneAndUpdate(
-        { provider_subscription_id: subscription.id },
-        {
-          user_id: user._id,
-          organization_id: organization?._id,
-          product,
-          plan,
-          provider: "stripe",
-          provider_subscription_id: subscription.id,
-          provider_price_id: priceId,
-          status: "active",
-          billing_cycle: cycle,
-          current_period_start: new Date(subscription.current_period_start * 1000),
-          current_period_end: new Date(subscription.current_period_end * 1000),
-          updated_at: new Date(),
-        },
-        { upsert: true, new: true, setDefaultsOnInsert: true },
-      );
-
-      const licenseExpiresAt = toIsoDate(subscription.current_period_end);
-      const license = await License.create({
-        license_key: generateLicenseKey(licensePlan.key_prefix),
-        user_id: user._id,
-        organization_id: organization?._id,
-        subscription_id: subDoc._id,
-        product,
-        plan,
-        status: "active",
-        activation_limit: licensePlan.activation_limit,
-        expires_at: licenseExpiresAt,
+      const started = await startSubscription({
+        userId,
+        product: target.product,
+        plan: target.plan,
+        provider: "stripe",
+        providerSubscriptionId: subscription.id,
+        providerPriceId: priceId,
+        cycle: subscription.items.data[0]?.price.recurring?.interval === "year" ? "yearly" : "monthly",
+        periodStart: new Date(subscription.current_period_start * 1000),
+        periodEnd: new Date(subscription.current_period_end * 1000),
+        couponId: session.metadata?.coupon_id,
         // Legacy fields kept for licenses issued before Subscription existed — see model comment.
-        stripe_subscription_id: subscription.id,
-        stripe_price_id: priceId,
+        licenseExtras: { stripe_subscription_id: subscription.id, stripe_price_id: priceId },
       });
-
-      enqueueEmail("license-created", user.email, {
-        name: user.name,
-        plan,
-        licenseKey: license.license_key,
-        expiresAt: licenseExpiresAt,
-      });
-
-      const couponId = session.metadata?.coupon_id;
-      if (couponId) {
-        await Coupon.updateOne({ _id: couponId }, { $inc: { redemption_count: 1 } });
-        await CouponRedemption.create({ coupon_id: couponId, user_id: user._id, subscription_id: subDoc._id });
+      if (started && session.customer) {
+        await User.updateOne({ _id: userId, stripe_customer_id: { $exists: false } }, { stripe_customer_id: session.customer as string });
       }
       break;
     }

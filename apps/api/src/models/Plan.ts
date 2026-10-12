@@ -19,6 +19,14 @@ export interface PlanDoc {
   activation_limit: number; // sites a license can activate; 0 = n/a (free has no license)
   stripe_price_monthly?: string; // Stripe price ids for checkout; unset → legacy env vars (config/plans.ts)
   stripe_price_yearly?: string;
+  // Lemon Squeezy variant ids, used when PAYMENT_PROVIDER=lemonsqueezy. LS charges in one store
+  // currency (USD), so "inr" variants are USD-priced at about the INR price, for buyers who pick INR.
+  ls_variant_monthly_usd?: string;
+  ls_variant_yearly_usd?: string;
+  ls_variant_monthly_inr?: string;
+  ls_variant_yearly_inr?: string;
+  price_monthly_inr?: number | null; // display only, e.g. 249
+  price_yearly_inr?: number | null; // display only, e.g. 2999
   license_key_prefix?: string; // e.g. "PRO" → PRO-XXXX-…; unset → legacy prefix or product initials
   cta_label: string;
   cta_type: "register" | "checkout" | "contact";
@@ -41,6 +49,12 @@ const planSchema = new Schema<PlanDoc>({
   activation_limit: { type: Number, default: 0 },
   stripe_price_monthly: String,
   stripe_price_yearly: String,
+  ls_variant_monthly_usd: String,
+  ls_variant_yearly_usd: String,
+  ls_variant_monthly_inr: String,
+  ls_variant_yearly_inr: String,
+  price_monthly_inr: { type: Number, default: null },
+  price_yearly_inr: { type: Number, default: null },
   license_key_prefix: { type: String, uppercase: true, trim: true },
   cta_label: { type: String, required: true },
   cta_type: { type: String, enum: ["register", "checkout", "contact"], required: true },

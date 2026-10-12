@@ -17,6 +17,8 @@ import { audit } from "../services/auditService.js";
 import { cookieDomain, hashPassword, signImpersonationToken, signSetPasswordToken } from "../services/authService.js";
 import { generateLicenseKey, todayIsoDate } from "../services/licenseService.js";
 import { createPersonalOrganization, findPrimaryOrganization } from "../services/organizationService.js";
+import { activeProviderName } from "../services/payments/index.js";
+import { createLsDiscount } from "../services/payments/lemonsqueezy.provider.js";
 import { stripe } from "../services/stripeClient.js";
 
 export const adminRouter = Router();
@@ -406,11 +408,50 @@ const couponCreateSchema = z.object({
   // Required for free_trial/free_months — those need a Stripe coupon created
   // manually (trial/repeating-duration coupons aren't a simple percent/amount off).
   stripe_coupon_id: z.string().optional(),
+  // Lemon Squeezy: a discount code already made in the LS dashboard. Unset → created from code/type/value.
+  ls_discount_code: z.string().optional(),
 });
+
+/** With Lemon Squeezy, the coupon is a discount code in the store: use the given one or create it. */
+async function createLemonSqueezyCoupon(data: z.infer<typeof couponCreateSchema>): Promise<{ code: string } | { error: string }> {
+  if (data.ls_discount_code) return { code: data.ls_discount_code.toUpperCase() };
+  const code = data.code.toUpperCase();
+  const common = { code, maxRedemptions: data.max_redemptions, expiresAt: data.expires_at ? new Date(data.expires_at) : undefined };
+  if (data.type === "percentage") await createLsDiscount({ ...common, amountType: "percent", amount: data.value, duration: "once" });
+  else if (data.type === "fixed_amount") await createLsDiscount({ ...common, amountType: "fixed", amount: Math.round(data.value * 100), duration: "once" });
+  else if (data.type === "free_months") {
+    await createLsDiscount({ ...common, amountType: "percent", amount: 100, duration: "repeating", durationInMonths: Math.round(data.value) });
+  } else return { error: "Lemon Squeezy discounts can't make a free trial; set a trial on the variant in Lemon Squeezy instead." };
+  return { code };
+}
 
 adminRouter.post("/coupons", async (req, res) => {
   const parsed = couponCreateSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: { code: "INVALID_INPUT", message: parsed.error.issues[0].message } });
+
+  if (activeProviderName() === "lemonsqueezy") {
+    const created = await createLemonSqueezyCoupon(parsed.data);
+    if ("error" in created) return res.status(400).json({ error: { code: "UNSUPPORTED_COUPON", message: created.error } });
+    const coupon = await Coupon.create({
+      code: parsed.data.code.toUpperCase(),
+      ls_discount_code: created.code,
+      stripe_coupon_id: parsed.data.stripe_coupon_id,
+      type: parsed.data.type,
+      value: parsed.data.value,
+      max_redemptions: parsed.data.max_redemptions,
+      expires_at: parsed.data.expires_at ? new Date(parsed.data.expires_at) : undefined,
+      applicable_plans: parsed.data.applicable_plans ?? ["pro", "business"],
+    });
+    await audit({
+      actorId: req.user!.id,
+      action: "coupon.create",
+      resource: "Coupon",
+      resourceId: coupon._id.toString(),
+      after: coupon.toObject() as unknown as Record<string, unknown>,
+      ip: req.ip,
+    });
+    return res.status(201).json(coupon);
+  }
 
   let stripeCouponId = parsed.data.stripe_coupon_id;
   if (!stripeCouponId) {

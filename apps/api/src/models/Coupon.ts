@@ -8,7 +8,9 @@ export interface CouponDoc {
   code: string;
   // Stripe's own coupon/promotion-code id — we don't reimplement discount
   // math, we just point Stripe Checkout at this and track redemptions here.
-  stripe_coupon_id: string;
+  stripe_coupon_id?: string;
+  // The same coupon as a Lemon Squeezy discount code, used when PAYMENT_PROVIDER=lemonsqueezy.
+  ls_discount_code?: string;
   type: CouponType;
   value: number;
   max_redemptions?: number;
@@ -21,7 +23,8 @@ export interface CouponDoc {
 
 const couponSchema = new Schema<CouponDoc>({
   code: { type: String, required: true, unique: true, uppercase: true, trim: true },
-  stripe_coupon_id: { type: String, required: true },
+  stripe_coupon_id: String,
+  ls_discount_code: String,
   type: { type: String, enum: ["percentage", "fixed_amount", "free_trial", "free_months"], required: true },
   value: { type: Number, required: true },
   max_redemptions: Number,

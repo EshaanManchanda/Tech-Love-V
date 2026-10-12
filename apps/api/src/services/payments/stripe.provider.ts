@@ -24,8 +24,8 @@ export const stripeProvider: PaymentProvider = {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       client_reference_id: params.userId,
-      customer_email: params.stripeCustomerId ? undefined : params.email,
-      customer: params.stripeCustomerId,
+      customer_email: params.providerCustomerId ? undefined : params.email,
+      customer: params.providerCustomerId,
       line_items: [{ price: params.priceId, quantity: 1 }],
       ...(params.providerCouponId ? { discounts: [{ coupon: params.providerCouponId }] } : { allow_promotion_codes: true }),
       metadata: params.metadata,

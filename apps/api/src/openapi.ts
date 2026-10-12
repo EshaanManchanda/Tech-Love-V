@@ -174,15 +174,18 @@ export const openApiSpec = {
 
     "/api/checkout/session": {
       post: {
-        summary: "Create a Stripe Checkout session",
+        summary: "Create a checkout (Lemon Squeezy or Stripe, per PAYMENT_PROVIDER)",
         tags: ["Billing"],
         security: [cookieAuth],
-        requestBody: { content: { "application/json": { schema: { properties: { product: { type: "string" }, plan: { type: "string" }, billing_cycle: { enum: ["monthly", "yearly"] }, coupon_code: {} } } } } },
+        requestBody: { content: { "application/json": { schema: { properties: { product: { type: "string" }, plan: { type: "string" }, billing_cycle: { enum: ["monthly", "yearly"] }, currency: { enum: ["usd", "inr"], description: "With Lemon Squeezy both charge USD; inr picks the India-priced variant" }, coupon_code: {} } } } } },
         responses: { "200": { description: "OK — { url }" } },
       },
     },
     "/api/billing/portal": {
-      post: { summary: "Create a Stripe Billing Portal session", tags: ["Billing"], security: [cookieAuth], responses: { "200": { description: "OK — { url }" } } },
+      post: { summary: "Get a billing portal link (Lemon Squeezy customer portal or Stripe Billing Portal)", tags: ["Billing"], security: [cookieAuth], responses: { "200": { description: "OK — { url }" } } },
+    },
+    "/api/webhooks/lemonsqueezy": {
+      post: { summary: "Lemon Squeezy webhook receiver (X-Signature-verified, not for direct use)", tags: ["Billing"], responses: { "200": { description: "OK" } } },
     },
     "/api/webhooks/stripe": {
       post: { summary: "Stripe webhook receiver (signature-verified, not for direct use)", tags: ["Billing"], responses: { "200": { description: "OK" } } },

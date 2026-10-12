@@ -19,6 +19,7 @@ import { apiKeysRouter } from "./routes/apiKeys.js";
 import { authRouter } from "./routes/auth.js";
 import { billingRouter, checkoutRouter } from "./routes/checkout.js";
 import { downloadsRouter } from "./routes/downloads.js";
+import { lemonSqueezyWebhookRouter } from "./routes/lemonSqueezyWebhook.js";
 import { licensesRouter } from "./routes/licenses.js";
 import { notificationsRouter } from "./routes/notifications.js";
 import { organizationsRouter } from "./routes/organizations.js";
@@ -51,6 +52,8 @@ export function createApp() {
 
   // Stripe needs the raw body to verify the signature — must be mounted before express.json().
   app.use("/api/webhooks/stripe", express.raw({ type: "application/json" }), stripeWebhookRouter);
+  // Same for Lemon Squeezy (X-Signature is an HMAC of the raw body). Both stay mounted whatever PAYMENT_PROVIDER says.
+  app.use("/api/webhooks/lemonsqueezy", express.raw({ type: "application/json" }), lemonSqueezyWebhookRouter);
 
   app.use(cookieParser());
   app.use(express.json());

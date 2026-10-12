@@ -1,5 +1,5 @@
 import request from "supertest";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../services/payments/stripe.provider.js", () => ({
   stripeProvider: { createCheckout: vi.fn().mockResolvedValue({ url: "https://stripe.test/checkout" }) },
@@ -23,7 +23,7 @@ async function registerUser(name: string) {
   return agent;
 }
 
-describe("POST /api/checkout/session — coupons", () => {
+describe("POST /api/checkout/session â€” coupons", () => {
   it("rejects an unknown coupon code without creating a checkout session", async () => {
     const agent = await registerUser("Buyer");
 
@@ -86,7 +86,7 @@ describe("POST /api/checkout/session — coupons", () => {
   });
 });
 
-describe("POST /api/checkout/session — any product", () => {
+describe("POST /api/checkout/session â€” any product", () => {
   async function seedPlan(slug: string, stripePriceMonthly?: string) {
     const product = await Product.create({ name: `Product ${slug}`, slug });
     await Plan.create({
@@ -135,5 +135,74 @@ describe("POST /api/checkout/session — any product", () => {
     const agent = await registerUser("Buyer7");
     const res = await agent.post("/api/checkout/session").send({ product: "nope", plan: "team", billing_cycle: "monthly" });
     expect(res.status).toBe(400);
+  });
+});
+
+describe("POST /api/checkout/session â€” Lemon Squeezy", () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(async () => {
+    process.env.PAYMENT_PROVIDER = "lemonsqueezy";
+    process.env.LEMONSQUEEZY_STORE_ID = "42";
+    vi.mocked(stripeProvider.createCheckout).mockClear();
+    fetchMock.mockReset().mockResolvedValue(new Response(JSON.stringify({ data: { id: "chk_1", attributes: { url: "https://shop.lemonsqueezy.com/checkout/abc" } } })));
+    vi.stubGlobal("fetch", fetchMock);
+    const product = await Product.create({ name: "Certificate Generator", slug: "certificate-generator" });
+    await Plan.create({
+      product_id: product._id,
+      slug: "pro",
+      name: "Pro",
+      billing_type: "recurring",
+      cert_limit: 0,
+      bulk_cap: 0,
+      activation_limit: 1,
+      ls_variant_monthly_usd: "1001",
+      ls_variant_monthly_inr: "1002",
+      cta_label: "Subscribe",
+      cta_type: "checkout",
+    });
+  });
+
+  afterEach(() => {
+    delete process.env.PAYMENT_PROVIDER;
+    vi.unstubAllGlobals();
+  });
+
+  const sentBody = () => JSON.parse(fetchMock.mock.calls[0][1].body as string).data;
+
+  it("creates a checkout for the INR variant with our ids in custom data", async () => {
+    const agent = await registerUser("LsBuyer");
+
+    const res = await agent.post("/api/checkout/session").send({ product: "certificate-generator", plan: "pro", billing_cycle: "monthly", currency: "inr" });
+
+    expect(res.status).toBe(200);
+    expect(res.body.url).toBe("https://shop.lemonsqueezy.com/checkout/abc");
+    expect(fetchMock.mock.calls[0][0]).toBe("https://api.lemonsqueezy.com/v1/checkouts");
+    const body = sentBody();
+    expect(body.relationships).toMatchObject({ store: { data: { id: "42" } }, variant: { data: { id: "1002" } } });
+    expect(body.attributes.checkout_data.custom).toMatchObject({ product: "certificate-generator", plan: "pro", cycle: "monthly" });
+    expect(body.attributes.checkout_data.custom.user_id).toBeTruthy();
+    expect(stripeProvider.createCheckout).not.toHaveBeenCalled();
+  });
+
+  it("defaults to the USD variant and passes a coupon as its discount code", async () => {
+    const agent = await registerUser("LsBuyer2");
+    await Coupon.create({ code: "LAUNCH10", ls_discount_code: "LAUNCH10", type: "percentage", value: 10, applicable_plans: ["pro"] });
+
+    await agent.post("/api/checkout/session").send({ product: "certificate-generator", plan: "pro", billing_cycle: "monthly", coupon_code: "launch10" });
+
+    const body = sentBody();
+    expect(body.relationships.variant.data.id).toBe("1001");
+    expect(body.attributes.checkout_data.discount_code).toBe("LAUNCH10");
+  });
+
+  it("refuses a cycle with no variant set up", async () => {
+    const agent = await registerUser("LsBuyer3");
+
+    const res = await agent.post("/api/checkout/session").send({ product: "certificate-generator", plan: "pro", billing_cycle: "yearly" });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe("PLAN_NOT_PURCHASABLE");
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

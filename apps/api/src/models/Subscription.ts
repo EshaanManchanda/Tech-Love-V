@@ -9,8 +9,9 @@ export interface SubscriptionDoc {
   organization_id?: Types.ObjectId;
   product?: string; // Product.slug — unset on subscriptions created before multi-product licensing
   plan: string;
-  provider: "stripe";
+  provider: "stripe" | "lemonsqueezy";
   provider_subscription_id: string;
+  provider_order_id?: string; // Lemon Squeezy order that started it; order_refunded is matched on this
   provider_price_id: string;
   status: SubscriptionStatus;
   billing_cycle: BillingCycle;
@@ -27,8 +28,9 @@ const subscriptionSchema = new Schema<SubscriptionDoc>({
   organization_id: { type: Schema.Types.ObjectId, ref: "Organization" },
   product: String,
   plan: { type: String, required: true },
-  provider: { type: String, enum: ["stripe"], default: "stripe" },
+  provider: { type: String, enum: ["stripe", "lemonsqueezy"], default: "stripe" },
   provider_subscription_id: { type: String, required: true, unique: true },
+  provider_order_id: String,
   provider_price_id: { type: String, required: true },
   status: {
     type: String,

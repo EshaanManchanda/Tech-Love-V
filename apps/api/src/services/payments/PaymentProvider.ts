@@ -3,12 +3,13 @@ import type { BillingCycle } from "../../models/Subscription.js";
 export interface CreateCheckoutParams {
   userId: string;
   email: string;
-  stripeCustomerId?: string;
-  priceId: string; // resolve with config/plans.ts priceIdFor() before calling
+  /** This user's customer id at the provider, if they already have one. */
+  providerCustomerId?: string;
+  priceId: string; // Stripe price id or Lemon Squeezy variant id — resolve with config/plans.ts priceIdFor() before calling
   cycle: BillingCycle;
   successUrl: string;
   cancelUrl: string;
-  /** Provider-native coupon id (e.g. a Stripe Coupon id) — resolve our own Coupon.code to this before calling. */
+  /** Provider-native coupon (a Stripe Coupon id, or a Lemon Squeezy discount code) — resolve our own Coupon.code to this before calling. */
   providerCouponId?: string;
   metadata?: Record<string, string>;
 }
@@ -24,9 +25,8 @@ export interface ProviderSubscription {
 
 /**
  * Abstraction over the billing backend so the API never calls a provider SDK
- * directly outside this folder (MERN plan §39/§149). Stripe is the only live
- * implementation today — see stripe.provider.ts. Razorpay/LemonSqueezy are
- * scaffolded (interface-only) for a later, separately-scoped phase.
+ * directly outside this folder (MERN plan §39/§149). Stripe and Lemon Squeezy
+ * are live; index.ts picks one from PAYMENT_PROVIDER. Razorpay is scaffolded only.
  */
 export interface PaymentProvider {
   createCheckout(params: CreateCheckoutParams): Promise<{ url: string }>;

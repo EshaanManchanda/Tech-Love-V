@@ -26,6 +26,9 @@ function toPlanCopy(plan: InstanceType<typeof Plan>) {
     label: plan.name,
     priceMonthly: plan.price_monthly,
     priceYearly: plan.price_yearly,
+    // Display prices for buyers who pick INR; checkout still charges USD (see config/plans.ts).
+    priceMonthlyInr: plan.price_monthly_inr ?? null,
+    priceYearlyInr: plan.price_yearly_inr ?? null,
     priceNote: plan.price_note,
     certLimit: certLimitLabel(plan.cert_limit),
     bulkCap: bulkCapLabel(plan.bulk_cap),

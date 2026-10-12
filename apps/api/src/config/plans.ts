@@ -2,6 +2,8 @@ import { Plan, type PlanDoc } from "../models/Plan.js";
 import { Product } from "../models/Product.js";
 
 export type BillingCycle = "monthly" | "yearly";
+/** What the buyer picked on the pricing page. With Lemon Squeezy both are charged in USD; "inr" picks the India-priced variant. */
+export type CheckoutCurrency = "usd" | "inr";
 
 // Any product created in the admin Products CMS can be licensed: its Plan
 // documents carry activation_limit, Stripe price ids and the key prefix.
@@ -74,7 +76,26 @@ export async function resolveLicensePlan(productSlug: string, planSlug: string):
   };
 }
 
-export function priceIdFor(plan: LicensePlan, cycle: BillingCycle): string {
+const LS_VARIANT_FIELDS = {
+  monthly: { usd: "ls_variant_monthly_usd", inr: "ls_variant_monthly_inr" },
+  yearly: { usd: "ls_variant_yearly_usd", inr: "ls_variant_yearly_inr" },
+} as const satisfies Record<BillingCycle, Record<CheckoutCurrency, keyof PlanDoc>>;
+
+/**
+ * The id checkout needs: a Lemon Squeezy variant id (set per plan in Admin → Products; no env
+ * fallback), or a Stripe price id. Stripe is USD-only here, so `currency` is ignored for it.
+ */
+export function priceIdFor(
+  plan: LicensePlan,
+  cycle: BillingCycle,
+  provider: "stripe" | "lemonsqueezy" = "stripe",
+  currency: CheckoutCurrency = "usd",
+): string {
+  if (provider === "lemonsqueezy") {
+    const variant = plan.doc?.[LS_VARIANT_FIELDS[cycle][currency]];
+    if (!variant) throw new Error(`No Lemon Squeezy ${cycle} ${currency} variant configured for ${plan.product}/${plan.plan}`);
+    return String(variant);
+  }
   const fromDoc = cycle === "monthly" ? plan.doc?.stripe_price_monthly : plan.doc?.stripe_price_yearly;
   if (fromDoc) return fromDoc;
   const envVar = legacyFor(plan.product, plan.plan)?.price_env[cycle];
@@ -83,12 +104,16 @@ export function priceIdFor(plan: LicensePlan, cycle: BillingCycle): string {
   return value;
 }
 
-/** Reverse lookup: which product/plan does a Stripe price id belong to? */
-export async function planForPriceId(priceId: string): Promise<{ product: string; plan: string } | null> {
-  const doc = await Plan.findOne({ $or: [{ stripe_price_monthly: priceId }, { stripe_price_yearly: priceId }] }).lean();
+/** Reverse lookup: which product/plan (and cycle) does a Stripe price id or Lemon Squeezy variant id belong to? */
+export async function planForPriceId(priceId: string): Promise<{ product: string; plan: string; cycle?: BillingCycle } | null> {
+  const lsFields = Object.values(LS_VARIANT_FIELDS).flatMap((byCurrency) => Object.values(byCurrency));
+  const doc = await Plan.findOne({
+    $or: [{ stripe_price_monthly: priceId }, { stripe_price_yearly: priceId }, ...lsFields.map((field) => ({ [field]: priceId }))],
+  }).lean();
   if (doc) {
     const product = await Product.findById(doc.product_id).lean();
-    if (product) return { product: product.slug, plan: doc.slug };
+    const yearly = doc.stripe_price_yearly === priceId || Object.values(LS_VARIANT_FIELDS.yearly).some((field) => doc[field] === priceId);
+    if (product) return { product: product.slug, plan: doc.slug, cycle: yearly ? "yearly" : "monthly" };
   }
   for (const [plan, legacy] of Object.entries(LEGACY)) {
     if (Object.values(legacy.price_env).some((envVar) => process.env[envVar] === priceId)) return { product: legacy.product, plan };

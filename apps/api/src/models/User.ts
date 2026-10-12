@@ -8,6 +8,7 @@ export interface UserDoc {
   role: "customer" | "admin";
   status: "active" | "disabled";
   stripe_customer_id?: string;
+  lemonsqueezy_customer_id?: string;
   created_at: Date;
 }
 
@@ -18,6 +19,7 @@ const userSchema = new Schema<UserDoc>({
   role: { type: String, enum: ["customer", "admin"], default: "customer" },
   status: { type: String, enum: ["active", "disabled"], default: "active" },
   stripe_customer_id: String,
+  lemonsqueezy_customer_id: String,
   created_at: { type: Date, default: Date.now },
 });
 
