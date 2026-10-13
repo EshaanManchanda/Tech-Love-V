@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { useMyLicenses } from "@/lib/useMyLicenses";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ interface LicenseWithActivations {
   expires_at: string;
   activation_limit: number;
   flagged?: boolean;
+  created_at: string;
   activations: Activation[];
 }
 
@@ -39,10 +41,7 @@ export default function LicensesPage() {
   const [transferEmail, setTransferEmail] = useState("");
   const [transferTarget, setTransferTarget] = useState<string | null>(null);
 
-  const { data: licenses, isLoading } = useQuery<LicenseWithActivations[]>({
-    queryKey: ["licenses", "me"],
-    queryFn: () => api("/api/licenses/me"),
-  });
+  const { data: licenses, isLoading, awaitingLicense } = useMyLicenses<LicenseWithActivations>();
 
   const { data: products } = useQuery<{ slug: string; name: string }[]>({ queryKey: ["products"], queryFn: () => api("/api/products") });
   const productName = (slug = "certificate-generator") => products?.find((p) => p.slug === slug)?.name ?? slug;
@@ -95,7 +94,15 @@ export default function LicensesPage() {
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-semibold">Licenses</h1>
 
-      {licenses?.length === 0 && (
+      {awaitingLicense && (
+        <Card>
+          <CardContent className="pt-6 text-sm">
+            Payment received — your license is being issued. It appears here within a few seconds; if it hasn&apos;t after a few minutes, contact support.
+          </CardContent>
+        </Card>
+      )}
+
+      {licenses?.length === 0 && !awaitingLicense && (
         <Card>
           <EmptyState
             icon={KeyRound}

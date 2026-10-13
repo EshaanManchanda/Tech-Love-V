@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
 import { Download, KeyRound, LifeBuoy } from "lucide-react";
-import { api } from "@/lib/api";
 import { useUser } from "@/lib/useUser";
+import { useMyLicenses } from "@/lib/useMyLicenses";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,15 +16,12 @@ interface LicenseSummary {
   expires_at: string;
   activations: unknown[];
   activation_limit: number;
+  created_at: string;
 }
 
 export default function DashboardOverviewPage() {
   const { data: user } = useUser();
-  const { data: licenses, isLoading } = useQuery<LicenseSummary[]>({
-    queryKey: ["licenses", "me"],
-    queryFn: () => api("/api/licenses/me"),
-    enabled: !!user,
-  });
+  const { data: licenses, isLoading, awaitingLicense } = useMyLicenses<LicenseSummary>(!!user);
 
   const activeLicenses = licenses?.filter((l) => l.status === "active") ?? [];
   const nextExpiry = activeLicenses.map((l) => l.expires_at).sort()[0];
@@ -33,6 +29,13 @@ export default function DashboardOverviewPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-semibold">Welcome, {user?.name}</h1>
+      {awaitingLicense && (
+        <Card>
+          <CardContent className="pt-6 text-sm">
+            Payment received — your license is being issued. It appears here within a few seconds; if it hasn&apos;t after a few minutes, contact support.
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
