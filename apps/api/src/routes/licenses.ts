@@ -38,6 +38,23 @@ licensesRouter.post("/:id/transfer", requireAuth, async (req, res) => {
   res.json(result.license);
 });
 
+// Customers can tidy away licenses that no longer work. Hiding never deletes: the record still backs refunds and support.
+licensesRouter.post("/:id/hide", requireAuth, async (req, res) => {
+  const license = await License.findOne({ _id: req.params.id, user_id: req.user!.id }).catch(() => null);
+  if (!license) return res.status(404).json({ error: { code: "NOT_FOUND", message: "License not found." } });
+  if (withEffectiveStatus(license.toObject()).status === "active") {
+    return res.status(400).json({ error: { code: "LICENSE_ACTIVE", message: "An active license can't be hidden." } });
+  }
+  await License.updateOne({ _id: license._id }, { hidden_by_user: true });
+  res.status(204).end();
+});
+
+licensesRouter.post("/:id/unhide", requireAuth, async (req, res) => {
+  const result = await License.updateOne({ _id: req.params.id, user_id: req.user!.id }, { hidden_by_user: false }).catch(() => null);
+  if (!result?.matchedCount) return res.status(404).json({ error: { code: "NOT_FOUND", message: "License not found." } });
+  res.status(204).end();
+});
+
 licensesRouter.post("/:id/regenerate-key", requireAuth, async (req, res) => {
   const license = await regenerateLicenseKey(req.params.id, req.user!.id);
   if (!license) return res.status(404).json({ error: { code: "NOT_FOUND", message: "License not found." } });

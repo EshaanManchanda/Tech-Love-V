@@ -20,6 +20,7 @@ export interface LicenseDoc {
   license_type?: "standard" | "trial";
   trial_duration_days?: number;
   flagged?: boolean; // set when ActivationService detects suspicious activation activity
+  hidden_by_user?: boolean; // the customer hid this dead license from their dashboard; admins still see it
   reminders_sent?: number[]; // renewal-reminder day-offsets already emailed (30/14/7/3/1) — see apps/worker
   // Negotiated per-business overrides set at manual issuance (see routes/admin.ts).
   // Informational only today — the WP plugin's own feature gating still reads a
@@ -48,6 +49,7 @@ const licenseSchema = new Schema<LicenseDoc>({
   license_type: { type: String, enum: ["standard", "trial"], default: "standard" },
   trial_duration_days: { type: Number },
   flagged: { type: Boolean, default: false },
+  hidden_by_user: { type: Boolean, default: false },
   reminders_sent: { type: [Number], default: [] },
   custom_terms: {
     cert_limit: Number,

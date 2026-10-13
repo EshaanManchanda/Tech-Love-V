@@ -182,3 +182,40 @@ describe("GET /api/licenses/me", () => {
     expect(res.body[0].status).toBe("expired");
   });
 });
+
+describe("POST /api/licenses/:id/hide", () => {
+  const licenseFor = (userId: unknown, status: string, expiresInDays: number) =>
+    License.create({ license_key: `PRO-${Math.random()}`, user_id: userId, plan: "pro", status, activation_limit: 1, expires_at: iso(expiresInDays).slice(0, 10) });
+
+  it("hides and unhides a dead license", async () => {
+    const { user, cookie } = await makeUser();
+    const license = await licenseFor(user._id, "cancelled", 20);
+
+    expect((await request(app).post(`/api/licenses/${license._id}/hide`).set("Cookie", cookie)).status).toBe(204);
+    expect((await request(app).get("/api/licenses/me").set("Cookie", cookie)).body[0].hidden_by_user).toBe(true);
+
+    expect((await request(app).post(`/api/licenses/${license._id}/unhide`).set("Cookie", cookie)).status).toBe(204);
+    expect((await License.findById(license._id))!.hidden_by_user).toBe(false);
+  });
+
+  it("won't hide a working license, but will hide one that's active only on paper (past expiry)", async () => {
+    const { user, cookie } = await makeUser();
+    const working = await licenseFor(user._id, "active", 20);
+    const lapsed = await licenseFor(user._id, "active", -3);
+
+    const refused = await request(app).post(`/api/licenses/${working._id}/hide`).set("Cookie", cookie);
+    expect(refused.status).toBe(400);
+    expect(refused.body.error.code).toBe("LICENSE_ACTIVE");
+    expect((await request(app).post(`/api/licenses/${lapsed._id}/hide`).set("Cookie", cookie)).status).toBe(204);
+  });
+
+  it("can't hide someone else's license", async () => {
+    const { user } = await makeUser();
+    const { cookie: otherCookie } = await makeUser();
+    const license = await licenseFor(user._id, "expired", -3);
+
+    expect((await request(app).post(`/api/licenses/${license._id}/hide`).set("Cookie", otherCookie)).status).toBe(404);
+    expect((await request(app).post(`/api/licenses/${license._id}/unhide`).set("Cookie", otherCookie)).status).toBe(404);
+    expect((await License.findById(license._id))!.hidden_by_user).toBe(false);
+  });
+});
