@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "./api";
 
 // The payment provider redirects to /dashboard?checkout=success before (or right as) its webhook
 // issues the license, so the first fetch often comes back empty. After a checkout we poll until the
 // new license shows up. Module-level so the wait survives client-side navigation between dashboard pages.
 let checkoutAt: number | null = null;
+let syncedFor: number | null = null;
 const POLL_MS = 2_000;
+// No license this long after checkout: the webhook is late or lost, so ask the API to pull the purchase from the provider.
+const SYNC_AFTER_MS = 20_000;
 const GIVE_UP_MS = 3 * 60_000;
 
 export function hasNewLicense(licenses: { created_at: string }[] | undefined, since: number): boolean {
@@ -37,6 +40,19 @@ export function useMyLicenses<T extends { created_at: string }>(enabled = true) 
       return POLL_MS;
     },
   });
+
+  const queryClient = useQueryClient();
+  const found = hasNewLicense(query.data, since ?? 0);
+  useEffect(() => {
+    if (since === null || found || syncedFor === since) return;
+    const timer = setTimeout(() => {
+      syncedFor = since;
+      api("/api/billing/sync", { method: "POST" })
+        .catch(() => {}) // polling carries on either way; the notice tells them to contact support if it never shows
+        .finally(() => queryClient.invalidateQueries({ queryKey: ["licenses", "me"] }));
+    }, Math.max(0, since + SYNC_AFTER_MS - Date.now()));
+    return () => clearTimeout(timer);
+  }, [since, found, queryClient]);
 
   const awaiting = since !== null && !hasNewLicense(query.data, since) && Date.now() - since <= GIVE_UP_MS;
   if (since !== null && !awaiting) checkoutAt = null;

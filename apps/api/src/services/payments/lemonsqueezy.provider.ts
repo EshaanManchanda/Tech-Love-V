@@ -75,6 +75,14 @@ export async function getLsSubscription(subscriptionId: string): Promise<LsSubsc
   return data.attributes as unknown as LsSubscriptionAttributes;
 }
 
+/** Refunds an order in full (LS: no amount = full refund). Returns the order's total and refunded amount, in paise. */
+export async function refundLsOrder(orderId: string): Promise<{ total: number; refundedAmount: number }> {
+  const { data } = await lsApi("POST", `/orders/${encodeURIComponent(orderId)}/refund`, {
+    data: { type: "orders", id: orderId, attributes: {} },
+  });
+  return { total: Number(data.attributes.total), refundedAmount: Number(data.attributes.refunded_amount) };
+}
+
 let storeCurrency: Promise<string> | null = null;
 
 /** The store's currency, lowercase ("inr"). Every variant is priced and charged in it. Fetched once per process. */

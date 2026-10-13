@@ -228,6 +228,14 @@ export default function CustomersPage() {
     mutationFn: (id: string) => api(`/api/admin/customers/${id}/reactivate`, { method: "POST" }),
     onSuccess: invalidate,
   });
+  const syncBilling = useMutation({
+    mutationFn: (id: string) => api<{ found: number }>(`/api/admin/customers/${id}/sync-billing`, { method: "POST" }),
+    onSuccess: ({ found }) => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "licenses"] });
+      toast.success(found ? `Synced ${found} Lemon Squeezy subscription${found === 1 ? "" : "s"}.` : "No Lemon Squeezy subscriptions for this email.");
+    },
+    onError: (err) => toast.error(err instanceof ApiError ? err.message : "Sync failed."),
+  });
 
   return (
     <div className="space-y-6">
@@ -276,6 +284,9 @@ export default function CustomersPage() {
                   <div className="flex flex-wrap gap-2">
                     <EditCustomerDialog customer={c} onSaved={invalidate} />
                     <ResetPasswordDialog customer={c} />
+                    <Button variant="outline" size="sm" disabled={syncBilling.isPending} onClick={() => syncBilling.mutate(c._id)}>
+                      Sync billing
+                    </Button>
                     {c.status === "active" ? (
                       <Button variant="outline" size="sm" onClick={() => deactivate.mutate(c._id)}>
                         Deactivate

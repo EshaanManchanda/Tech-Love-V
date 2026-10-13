@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireAuth } from "../middleware/auth.js";
 import { License } from "../models/License.js";
 import { Activation } from "../models/Activation.js";
-import { normalizeSiteUrl, regenerateLicenseKey, transferLicense } from "../services/licenseService.js";
+import { normalizeSiteUrl, regenerateLicenseKey, transferLicense, withEffectiveStatus } from "../services/licenseService.js";
 
 export const licensesRouter = Router();
 
@@ -11,7 +11,7 @@ licensesRouter.get("/me", requireAuth, async (req, res) => {
   const licenses = await License.find({ user_id: req.user!.id }).lean();
   const withActivations = await Promise.all(
     licenses.map(async (license) => ({
-      ...license,
+      ...withEffectiveStatus(license),
       activations: await Activation.find({ license_id: license._id }).lean(),
     })),
   );

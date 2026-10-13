@@ -21,6 +21,11 @@ export function isExpired(license: Pick<LicenseDoc, "expires_at">): boolean {
   return license.expires_at < todayIsoDate();
 }
 
+/** For display: an "active" license past its expires_at reads "expired" (the stored status is only checked lazily). */
+export function withEffectiveStatus<T extends Pick<LicenseDoc, "status" | "expires_at">>(license: T): T {
+  return license.status === "active" && isExpired(license) ? { ...license, status: "expired" } : license;
+}
+
 export function todayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
 }

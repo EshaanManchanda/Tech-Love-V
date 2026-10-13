@@ -10,6 +10,7 @@ export interface LicenseDoc {
   status: "active" | "expired" | "cancelled" | "suspended";
   expires_at: string;
   reminders_sent: number[];
+  subscription_id?: Types.ObjectId;
 }
 
 const licenseSchema = new Schema<LicenseDoc>({
@@ -18,6 +19,7 @@ const licenseSchema = new Schema<LicenseDoc>({
   status: String,
   expires_at: String,
   reminders_sent: { type: [Number], default: [] },
+  subscription_id: { type: Schema.Types.ObjectId, ref: "Subscription" },
 });
 
 export const License = model<LicenseDoc>("License", licenseSchema, "licenses");

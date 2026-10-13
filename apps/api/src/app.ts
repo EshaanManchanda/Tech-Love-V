@@ -72,6 +72,8 @@ export function createApp() {
 
   const licenseLimiter = rateLimit({ windowMs: 60_000, limit: 60 });
   app.use("/api/payments", licenseLimiter, pluginLicenseRouter);
+  // Each sync calls the Lemon Squeezy API.
+  app.use("/api/billing/sync", rateLimit({ windowMs: 60_000, limit: 3 }));
 
   app.use("/api/auth", authRouter);
   app.use("/api/plans", plansRouter);

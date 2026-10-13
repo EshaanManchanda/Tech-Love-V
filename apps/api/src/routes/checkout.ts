@@ -4,6 +4,7 @@ import { requireAuth } from "../middleware/auth.js";
 import { Coupon } from "../models/Coupon.js";
 import { User } from "../models/User.js";
 import { defaultProductForPlan, priceIdFor, resolveLicensePlan } from "../config/plans.js";
+import { syncLsSubscriptionsForUser } from "../services/lemonSqueezySync.js";
 import { activeProviderName, getPaymentProvider } from "../services/payments/index.js";
 
 export const checkoutRouter = Router();
@@ -99,8 +100,29 @@ billingRouter.post("/portal", requireAuth, async (req, res) => {
     return res.status(400).json({ error: { code: "NO_BILLING_ACCOUNT", message: "No billing account yet — subscribe first." } });
   }
 
-  const { url } = await getPaymentProvider(account.provider).createPortal(account.id, `${appUrl()}/dashboard`);
+  let url: string;
+  try {
+    ({ url } = await getPaymentProvider(account.provider).createPortal(account.id, `${appUrl()}/dashboard`));
+  } catch (err) {
+    // E.g. a customer id from the other mode (test vs live) of the store. The details go to the log.
+    req.log.error({ err, provider: account.provider, customerId: account.id }, "billing portal: provider refused");
+    return res.status(502).json({
+      error: { code: "PORTAL_UNAVAILABLE", message: "The billing portal couldn't be opened right now. Please try again later or contact us." },
+    });
+  }
   res.json({ url });
+});
+
+// The dashboard calls this when a license hasn't shown up a while after checkout (webhook lost or late).
+billingRouter.post("/sync", requireAuth, async (req, res) => {
+  const user = await User.findById(req.user!.id);
+  if (!user) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Account not found." } });
+  try {
+    res.json({ found: await syncLsSubscriptionsForUser(user) });
+  } catch (err) {
+    req.log.error({ err, user: user._id }, "billing sync failed");
+    res.status(502).json({ error: { code: "SYNC_FAILED", message: "Couldn't check your purchase right now. Please try again in a minute." } });
+  }
 });
 
 export { billingRouter };

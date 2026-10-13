@@ -15,7 +15,9 @@ import { User } from "../models/User.js";
 import { enqueueEmail } from "../queues/emailQueue.js";
 import { audit } from "../services/auditService.js";
 import { cookieDomain, hashPassword, signImpersonationToken, signSetPasswordToken } from "../services/authService.js";
-import { generateLicenseKey, todayIsoDate } from "../services/licenseService.js";
+import { generateLicenseKey, todayIsoDate, withEffectiveStatus } from "../services/licenseService.js";
+import { refundAndCancel } from "../services/billingService.js";
+import { syncLsSubscriptionsForUser } from "../services/lemonSqueezySync.js";
 import { createPersonalOrganization, findPrimaryOrganization } from "../services/organizationService.js";
 import { activeProviderName } from "../services/payments/index.js";
 import { createLsDiscount, deleteLsDiscount } from "../services/payments/lemonsqueezy.provider.js";
@@ -117,6 +119,41 @@ adminRouter.post("/customers/:id/reactivate", async (req, res) => {
   res.json({ _id: user._id, status: user.status });
 });
 
+// Recovers purchases whose webhook never arrived: pulls the customer's Lemon Squeezy subscriptions and issues what's missing.
+adminRouter.post("/customers/:id/sync-billing", async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (!user) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Customer not found." } });
+  let found: number;
+  try {
+    found = await syncLsSubscriptionsForUser(user);
+  } catch (err) {
+    req.log.error({ err, user: user._id }, "admin: billing sync failed");
+    return res.status(502).json({ error: { code: "SYNC_FAILED", message: "Couldn't reach Lemon Squeezy. Try again in a minute." } });
+  }
+  await audit({ actorId: req.user!.id, action: "customer.sync-billing", resource: "User", resourceId: user._id.toString(), after: { found }, ip: req.ip });
+  res.json({ found });
+});
+
+// Full refund regardless of the 7-day window — the admin's call (goodwill, disputes).
+adminRouter.post("/subscriptions/:id/refund", async (req, res) => {
+  const subscription = await Subscription.findById(req.params.id);
+  if (!subscription) return res.status(404).json({ error: { code: "NOT_FOUND", message: "Subscription not found." } });
+  if (subscription.provider !== "lemonsqueezy" || !subscription.provider_order_id) {
+    return res.status(400).json({ error: { code: "NOT_REFUNDABLE", message: "Only Lemon Squeezy subscriptions can be refunded here." } });
+  }
+  if (subscription.status === "cancelled") {
+    return res.status(400).json({ error: { code: "ALREADY_REFUNDED", message: "This subscription is already refunded." } });
+  }
+  try {
+    await refundAndCancel(subscription);
+  } catch (err) {
+    req.log.error({ err, subscription: subscription._id }, "admin: refund failed");
+    return res.status(502).json({ error: { code: "REFUND_FAILED", message: "Lemon Squeezy refused the refund. Check the order in the Lemon Squeezy dashboard." } });
+  }
+  await audit({ actorId: req.user!.id, action: "subscription.refund", resource: "Subscription", resourceId: subscription._id.toString(), ip: req.ip });
+  res.json({ refunded: true });
+});
+
 adminRouter.post("/customers/:id/reset-password", async (req, res) => {
   const parsed = passwordModeSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: { code: "INVALID_INPUT", message: parsed.error.issues[0].message } });
@@ -149,7 +186,7 @@ adminRouter.get("/licenses", async (_req, res) => {
   const licenses = await License.find().populate("user_id", "name email").lean();
   const withActivations = await Promise.all(
     licenses.map(async (license) => ({
-      ...license,
+      ...withEffectiveStatus(license),
       activations: await Activation.find({ license_id: license._id }).select("site_url activated_at expires_at").lean(),
     })),
   );

@@ -31,6 +31,7 @@ interface AdminLicense {
   expires_at: string;
   flagged?: boolean;
   license_type?: "standard" | "trial";
+  subscription_id?: string;
   user_id: { name: string; email: string } | null;
   activations?: AdminActivation[];
 }
@@ -343,6 +344,14 @@ export default function AdminLicensesPage() {
     mutationFn: (id: string) => api(`/api/admin/licenses/${id}/enable`, { method: "POST" }),
     onSuccess: invalidate,
   });
+  const refund = useMutation({
+    mutationFn: (subscriptionId: string) => api(`/api/admin/subscriptions/${subscriptionId}/refund`, { method: "POST" }),
+    onSuccess: () => {
+      invalidate();
+      toast.success("Refunded in full and cancelled.");
+    },
+    onError: (err) => toast.error(err instanceof ApiError ? err.message : "Refund failed."),
+  });
 
   return (
     <div className="space-y-6">
@@ -413,6 +422,18 @@ export default function AdminLicensesPage() {
                     ) : (
                       <Button variant="outline" size="sm" onClick={() => enable.mutate(l._id)}>
                         Enable
+                      </Button>
+                    )}
+                    {l.subscription_id && l.status !== "cancelled" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={refund.isPending}
+                        onClick={() => {
+                          if (confirm(`Refund ${l.user_id?.email ?? "this customer"} in full and cancel this license now?`)) refund.mutate(l.subscription_id!);
+                        }}
+                      >
+                        Refund
                       </Button>
                     )}
                   </div>

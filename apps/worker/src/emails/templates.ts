@@ -1,4 +1,4 @@
-export type EmailTemplateType = "welcome" | "invite" | "account-created" | "password-reset" | "license-created" | "license-expiring" | "support-reply";
+export type EmailTemplateType = "welcome" | "invite" | "account-created" | "password-reset" | "license-created" | "license-expiring" | "license-expired" | "subscription-cancelled" | "subscription-refunded" | "payment-failed" | "support-reply";
 
 export function renderTemplate(type: EmailTemplateType, data: Record<string, unknown>): { subject: string; html: string } {
   switch (type) {
@@ -36,6 +36,30 @@ export function renderTemplate(type: EmailTemplateType, data: Record<string, unk
       return {
         subject: `Your Certificate Generator license expires in ${data.daysUntil} day${data.daysUntil === 1 ? "" : "s"}`,
         html: `<p>Hi ${data.name},</p><p>Your <strong>${data.plan}</strong> license expires on ${data.expiresAt}. Renew from your dashboard to keep premium features active.</p>`,
+      };
+
+    case "license-expired":
+      return {
+        subject: "Your Certificate Generator license has expired",
+        html: `<p>Hi ${data.name},</p><p>Your <strong>${data.plan}</strong> license expired on ${data.expiresAt}, so premium features are now off on your sites. Your certificates stay valid. Subscribe again from your dashboard to turn them back on.</p>`,
+      };
+
+    case "subscription-cancelled":
+      return {
+        subject: "Your subscription is cancelled",
+        html: `<p>Hi ${data.name},</p><p>Your <strong>${data.plan}</strong> subscription won't renew. Your license keeps working until ${data.accessUntil}. Changed your mind? Resume it from your dashboard's Billing page before then.</p>`,
+      };
+
+    case "subscription-refunded":
+      return {
+        subject: "Your refund is on its way",
+        html: `<p>Hi ${data.name},</p><p>We've refunded your <strong>${data.plan}</strong> subscription in full and cancelled its license. Lemon Squeezy returns the money to your original payment method, usually within 5–10 business days.</p>`,
+      };
+
+    case "payment-failed":
+      return {
+        subject: "Your payment didn't go through",
+        html: `<p>Hi ${data.name},</p><p>We couldn't charge your card for your <strong>${data.plan}</strong> subscription. We'll retry over the next few days; to keep your license active, update your payment method:</p><p><a href="${data.billingUrl}">${data.billingUrl}</a></p>`,
       };
 
     case "support-reply":
