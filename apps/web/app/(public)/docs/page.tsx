@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
+import { API_URL } from "@/lib/api";
 import { CG_DOCS } from "@/lib/cg-docs";
 import { YOUTUBE_PLAYLIST } from "@/lib/site";
 
@@ -10,21 +11,31 @@ export const metadata: Metadata = {
   alternates: { canonical: "/docs" },
 };
 
-const badges = ["Version 7.8", "WordPress 6.0+", "PHP 8.2+", "GPL-2.0+"];
+async function getCurrentVersion(): Promise<string | null> {
+  try {
+    const res = await fetch(`${API_URL}/api/products/certificate-generator`, { next: { revalidate: 60 } });
+    if (!res.ok) return null;
+    return (await res.json()).current_version ?? null;
+  } catch {
+    return null; // API unreachable — render without the version badge
+  }
+}
 
 const features = [
-  "Certificate templates — drag-position fields, per-field font/size/colour",
-  "PDF generation via a bundled FPDF engine — no TCPDF/mPDF dependency",
-  "QR-code verification on every certificate",
+  "Certificate templates — drag-position fields, per-field font/size/colour; QR code and serial number as field slots",
+  "PDF generation on your server, names in any language (bundled FPDF + mPDF)",
+  "QR-code verification with unguessable codes; LinkedIn, X and WhatsApp sharing",
   "Auto-generated, configurable serial numbers",
-  "Student / Teacher / School management, manual or bulk CSV",
+  "Student / Teacher / School management, manual or bulk CSV — no row limits",
+  "Import history, flag duplicates for review, undo an import",
+  "Background bulk generation jobs with progress, failed items and retry",
   "Bulk email sending with a background queue and retry backoff",
-  "Automatic ZIP bundling for recipients with multiple certificates",
+  "School Coordinator role: each school issues its own certificates",
+  "Certificate register with CSV / PDF export",
   "Email logs & analytics dashboard",
-  "Public verification & search shortcodes — no login required",
-  "REST API for external integrations",
-  "Free / Pro / Business licensing tiers",
-  "External sync with a companion GEMA backend",
+  "Public verification, search and My Certificates shortcodes",
+  "Diagnostics page and WP-CLI commands",
+  "Pro: LMS / WooCommerce auto-issue, REST API, signed webhooks, n8n / Zapier, WhatsApp",
 ];
 
 const faqs = [
@@ -36,7 +47,9 @@ const faqs = [
   { q: "Is the plugin multisite compatible?", a: "It's designed for single-site use. The free plugin works on any number of sites; a Pro license activates 1 site and Business up to 5." },
 ];
 
-export default function DocsPage() {
+export default async function DocsPage() {
+  const version = await getCurrentVersion();
+  const badges = [...(version ? [`Version ${version}`] : []), "WordPress 6.0+", "PHP 8.2+", "GPL-2.0+"];
   return (
     <main className="mx-auto max-w-4xl px-4 py-16">
       <h1 className="text-center font-display text-3xl font-bold text-slate-900">Documentation</h1>

@@ -37,6 +37,8 @@ const facts: [string, React.ReactNode][] = [
   ["Analytics", link("/certificate-generator/certificate-analytics", "Yes, with email delivery logs")],
   ["LMS integrations", link("/certificate-generator/lms-certificate-automation", "Pro add-on: Tutor LMS, LearnDash, LifterLMS, Sensei LMS, LearnPress, WooCommerce")],
   ["REST API", link("/docs/certificate-generator/rest-api", "Yes (Pro add-on)")],
+  ["Webhooks, n8n / Zapier, WhatsApp", link("/docs/certificate-generator/automation", "Yes (Pro add-on)")],
+  ["WP-CLI", "Yes: generate, import, jobs, diagnostics"],
   ["Local development", link("/docs/certificate-generator/localwp", "Works on LocalWP")],
 ];
 

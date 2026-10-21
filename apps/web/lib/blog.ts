@@ -38,7 +38,7 @@ export const BLOG_POSTS: BlogPost[] = [
         h2: "3. Add the people receiving certificates",
         paragraphs: [
           "For a handful of people, add them one by one under Students. For a class or cohort, put them in a spreadsheet with the columns student_name, email, school_name, certificate_type and issue_date, save it as CSV, and upload it under Bulk Import.",
-          "If your courses run on Tutor LMS, LearnDash, LifterLMS or Sensei — or you sell courses with WooCommerce — you can skip this step entirely and let certificates issue automatically on completion.",
+          "If your courses run on Tutor LMS, LearnDash, LifterLMS, Sensei or LearnPress — or you sell courses with WooCommerce — the Pro add-on lets you skip this step entirely and let certificates issue automatically on completion.",
         ],
       },
       {
@@ -56,7 +56,7 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         h2: "6. Let people verify them",
         paragraphs: [
-          "Anyone who scans the QR code lands on a verification page on your site confirming the certificate is genuine. You can also add a verification form anywhere with the [cg_verify_certificate] shortcode, and a lookup page where students find their own certificates with [student_search].",
+          "Anyone who scans the QR code lands on a verification page on your site confirming the certificate is genuine. You can also add a verification form anywhere with the [certificate_generator_verify_certificate] shortcode, and a lookup page where students find their own certificates with [certificate_generator_student_search].",
         ],
       },
     ],
@@ -97,7 +97,7 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         h2: "Let schools and students help themselves",
         paragraphs: [
-          "Instead of answering \"can you resend my certificate?\" emails, add [student_search] to a page so students look up their own certificates by email. Partner schools can download all of their certificates at once with [school_bulk_certificate_download].",
+          "Instead of answering \"can you resend my certificate?\" emails, add [certificate_generator_student_search] to a page so students look up their own certificates by email. Partner schools can download all of their certificates at once with [school_bulk_certificate_download].",
         ],
       },
       {
@@ -117,7 +117,7 @@ export const BLOG_POSTS: BlogPost[] = [
     slug: "issuing-certificates-for-online-courses",
     title: "Issuing Certificates for Online Courses in WordPress",
     description:
-      "Automatically issue course completion certificates from Tutor LMS, LearnDash, LifterLMS, Sensei or WooCommerce — including certificates for completing a multi-course track.",
+      "Automatically issue course completion certificates from Tutor LMS, LearnDash, LifterLMS, Sensei, LearnPress or WooCommerce — including certificates for completing a multi-course track.",
     datePublished: "2026-10-08",
     intro:
       "If you sell or run online courses on WordPress, certificates should arrive the moment a learner finishes — not whenever someone gets around to making them. Here's how automatic issuance works with Certificate Generator.",
@@ -125,7 +125,7 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         h2: "Connect your LMS",
         paragraphs: [
-          "Certificate Generator works with Tutor LMS, LearnDash, LifterLMS and Sensei LMS course completion, and with WooCommerce order completion for courses or events you sell as products. The integrations are included on the Free plan.",
+          "Certificate Generator works with Tutor LMS, LearnDash, LifterLMS, Sensei LMS and LearnPress course completion (and a passed Tutor LMS quiz), and with WooCommerce order completion for courses or events you sell as products. The integrations are part of the Pro add-on (₹249/month); the free plugin covers CSV import and bulk send.",
         ],
       },
       {
@@ -143,7 +143,7 @@ export const BLOG_POSTS: BlogPost[] = [
       {
         h2: "Give learners something they can share",
         paragraphs: [
-          "Learners can find their certificates through the [student_search] lookup page and add them to LinkedIn from the results. Anyone viewing the certificate can scan its QR code to confirm it's genuine.",
+          "Learners can find their certificates through the [certificate_generator_student_search] lookup page and add them to LinkedIn from the results. Anyone viewing the certificate can scan its QR code to confirm it's genuine.",
         ],
       },
     ],

@@ -34,8 +34,9 @@ export const CG_FEATURES: CgFeature[] = [
       {
         h2: "Everything in one admin menu",
         paragraphs: [
-          "The plugin adds a Certificate Generator menu to wp-admin with Dashboard, Students, Teachers, Schools, Templates, Bulk Import, Bulk Export, Bulk Send, Email Logs, Analytics and Serial Settings pages.",
-          "Students, teachers and schools are separate record types, each with its own email template, so one install can serve a whole school network or training organisation.",
+          "The plugin adds a Certificate Generator menu to wp-admin with Dashboard, Students, Teachers, Schools, Templates, Bulk Import, Bulk Export, Bulk Jobs, Bulk Send, Register, Email Logs, Analytics and Serial Settings pages.",
+          "Students, teachers and schools are separate record types, each with its own email template, so one install can serve a whole school network or training organisation. The School Coordinator role lets each school's staff view, import and issue certificates for their own school only, while templates, settings and revoke stay with admins.",
+          "The certificate register lists every issued certificate with its serial, verification code, school and status, and downloads as CSV or a printable PDF.",
         ],
         screenshot: "hero-dashboard.png",
       },
@@ -49,7 +50,8 @@ export const CG_FEATURES: CgFeature[] = [
       {
         h2: "Self-hosted by design",
         paragraphs: [
-          "PDF rendering (bundled FPDF engine), QR generation (bundled PHP QR Code library) and font embedding all happen on your own server. Your recipient data stays in your WordPress database, in the plugin's own tables.",
+          "PDF rendering (bundled FPDF, with mPDF for non-Latin names), QR generation (bundled QR library) and font embedding all happen on your own server. Your recipient data stays in your WordPress database, in the plugin's own tables.",
+          "A Diagnostics page (Tools → Cert Gen Diagnostics) checks folders, fonts, libraries, scheduled tasks and the email queue, and WP-CLI commands (wp certificate-generator generate | import | jobs | diagnostics) do the same work from the command line.",
         ],
       },
     ],
@@ -73,6 +75,14 @@ export const CG_FEATURES: CgFeature[] = [
         paragraphs: [
           "Go to Bulk Import, download the sample CSV, fill it in and upload it. Student imports need the columns student_name, email, school_name, certificate_type and issue_date; teachers and schools use the equivalent name field.",
           "There are no row limits on any plan, including Free. An import check maps your columns, detects delimiter and encoding, and flags problems before anything is saved; sample CSVs are included. Bulk Export downloads the same records as CSV for backups.",
+          "Every import is kept in Import history. Rows that match an existing record can be flagged for review, and Undo import removes what an import added and restores what it changed.",
+        ],
+      },
+      {
+        h2: "Generate thousands of PDFs in the background",
+        paragraphs: [
+          "Generate certificates on the Students, Teachers or Schools list starts a background job that works 25 records at a time, with no cap per run. The Bulk Jobs page shows done, failed and pending, lists each failed record with its reason, and Retry failed re-runs only those — never issuing a second certificate or a new serial.",
+          "Regenerate PDFs re-renders existing certificates with the same serials, and a PDF status filter finds records with no PDF yet or a missing file.",
         ],
       },
       {
@@ -133,7 +143,7 @@ export const CG_FEATURES: CgFeature[] = [
       {
         h2: "Add a verification form anywhere",
         paragraphs: [
-          "The [cg_verify_certificate] shortcode places the verification form on any page or post. Revoked certificates are shown as revoked when checked.",
+          "The [certificate_generator_verify_certificate] shortcode places the verification form on any page or post. Revoked certificates are shown as revoked when checked.",
           "Because verification happens on your website, it must be publicly reachable for other people to verify certificates — a local development site can generate QR codes, but outsiders can't open the links.",
         ],
       },
@@ -158,6 +168,7 @@ export const CG_FEATURES: CgFeature[] = [
         h2: "Position every field visually",
         paragraphs: [
           "The field position editor shows a live canvas with zoom and grid snapping. Place the standard fields plus up to 15 custom fields per certificate type, and set font, size and colour per field. Image-type fields support signatures and seals.",
+          "The QR code and serial number are field slots too: drag the QR square to where you want it and size it in mm, and give the serial its own font, size, colour and leading text such as \"Certificate No.\".",
         ],
         screenshot: "template-editor-field-mapping.png",
       },
@@ -239,8 +250,9 @@ export const CG_FEATURES: CgFeature[] = [
       {
         h2: "Self-serve certificate lookup",
         paragraphs: [
-          "Drop [student_search], [teacher_search] or [school_search] onto any page and recipients can look up their certificates by email (schools by name and place). Results include an Add to LinkedIn button.",
-          "[school_bulk_certificate_download] lets a school download all of its certificates as a ZIP from the front end.",
+          "Drop [certificate_generator_student_search], [certificate_generator_teacher_search] or [certificate_generator_school_search] onto any page and recipients can look up their certificates by email (schools by name and place). Results include an Add to LinkedIn button.",
+          "[certificate_generator_my_certificates] lets recipients sign in with an emailed link (no account needed) to download, share and choose whether their name shows on the verify page.",
+          "With Pro, [school_bulk_certificate_download] lets a school download all of its certificates as a ZIP from the front end.",
         ],
         screenshot: "search-shortcode-frontend.png",
       },
@@ -314,7 +326,7 @@ export const CG_FEATURES: CgFeature[] = [
       {
         h2: "Supported platforms",
         paragraphs: [
-          "Tutor LMS, LearnDash, LifterLMS, Sensei LMS and LearnPress course completion, plus WooCommerce order completion, each mapped to a certificate type on its own settings page. \"Issue to past completions\" backfills certificates for learners who finished before you installed Pro. Records created this way are tagged with their source, so Bulk Send can filter by where a recipient came from.",
+          "Tutor LMS (course completion or a passed quiz, including manually reviewed quizzes), LearnDash, LifterLMS, Sensei LMS and LearnPress course completion, plus WooCommerce order completion (guest orders too, one certificate per mapped product), each mapped to a certificate type on its own settings page. \"Issue to past completions\" backfills certificates for learners who finished before you installed Pro. Records created this way are tagged with their source, so Bulk Send can filter by where a recipient came from.",
         ],
         screenshot: "lms-integration-settings.png",
       },
@@ -324,8 +336,18 @@ export const CG_FEATURES: CgFeature[] = [
           "Sensei \"track\" certificates are issued only after a learner has finished every course in the track — useful for programmes and learning paths.",
         ],
       },
+      {
+        h2: "Beyond your LMS: API, webhooks and n8n / Zapier",
+        paragraphs: [
+          "Pro also includes a REST API with scoped keys and signed webhooks for 16 events, so any system can issue certificates and react when one is issued, verified or revoked. The Automation page has five ready-made n8n workflows and a Zapier guide, and certificates can go out over WhatsApp as well as email.",
+        ],
+      },
     ],
-    docs: [{ slug: "getting-started", label: "Getting started" }],
+    docs: [
+      { slug: "getting-started", label: "Getting started" },
+      { slug: "automation", label: "Automation (n8n, Zapier, WhatsApp)" },
+      { slug: "rest-api", label: "REST API" },
+    ],
     related: ["certificate-templates", "certificate-verification"],
   },
 ];
@@ -338,6 +360,9 @@ export const CG_FEATURE_LINKS: Record<string, string> = {
   "bulk-tools": "/certificate-generator/bulk-certificate-generation",
   analytics: "/certificate-generator/certificate-analytics",
   "public-search": "/certificate-generator/student-management",
+  "bulk-jobs": "/certificate-generator/bulk-certificate-generation",
+  roles: "/certificate-generator/certificate-management-system",
+  automation: "/certificate-generator/lms-certificate-automation",
 };
 
 export function getCgFeature(slug: string) {

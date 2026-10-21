@@ -1,8 +1,8 @@
 {
   "meta": {
     "purpose": "Content source for the public marketing page: features, why-choose-us, and competitor comparison for Certificate Generator.",
-    "plugin_version": "7.8 (free) / Pro add-on 1.1",
-    "last_updated": "2026-09-21"
+    "plugin_version": "7.9.4 (free) / Pro add-on 1.8.0",
+    "last_updated": "2026-10-21"
   },
   "product_name": "Certificate Generator",
   "time_saved": {
@@ -24,8 +24,8 @@
         "screenshot_ref": "create-template-in-plugin.png"
       },
       {
-        "title": "Upload your brand font",
-        "detail": "Add any .ttf (a script font for names, for example) and select it for any field on the template.",
+        "title": "Upload your brand font (Pro)",
+        "detail": "Add any .ttf (a script font for names, for example) and select it for any field on the template. The free plugin ships 27 built-in fonts.",
         "screenshot_ref": "upload-custom-font.png"
       },
       {
@@ -47,7 +47,7 @@
       "id": "templates",
       "title": "Drag-and-drop certificate designer",
       "pitch": "Upload any background image and position every field exactly where you want it — no CSS, no design tool, no exporting from Canva.",
-      "detail": "Per-field fonts, sizes and colours, custom-text fields with {field} tags, image and e-signature fields, 27 built-in fonts. Preview with a real record before you issue — and issued certificates keep their layout even if you edit the template later.",
+      "detail": "Per-field fonts, sizes and colours, custom-text fields with {field} tags, image and e-signature fields, 27 built-in fonts. The QR code and serial number are fields too: drag them into place and style the serial like any other text. Preview with a real record before you issue — and issued certificates keep their layout even if you edit the template later.",
       "screenshot_ref": "template-editor-field-mapping.png"
     },
     {
@@ -68,7 +68,7 @@
       "id": "auto-issuance",
       "title": "Automatic issuance from your LMS or store (Pro)",
       "pitch": "Stop generating certificates by hand. Completion triggers the certificate.",
-      "detail": "The Pro add-on works with Tutor LMS, LearnDash, LifterLMS, Sensei (including tracks), LearnPress and WooCommerce order completion — and can issue certificates for everyone who completed before you installed it.",
+      "detail": "The Pro add-on works with Tutor LMS (course completion or a passed quiz), LearnDash, LifterLMS, Sensei (including tracks), LearnPress and WooCommerce order completion, guest orders included — and can issue certificates for everyone who completed before you installed it.",
       "screenshot_ref": "lms-integration-settings.png"
     },
     {
@@ -77,6 +77,20 @@
       "pitch": "Onboard a thousand students in one CSV upload, then email their certificates in a single click — free, with no row or email limits.",
       "detail": "An import check maps columns, detects delimiter and encoding and flags problems before anything is saved (sample CSVs included). A background queue handles delivery over wp_mail, SMTP, Sender.net or Mandrill with rate limits and retries, plus admin ZIP downloads of every certificate.",
       "screenshot_ref": "bulk-send-queue.png"
+    },
+    {
+      "id": "bulk-jobs",
+      "title": "Background bulk jobs you can undo",
+      "pitch": "Generate thousands of certificates in the background and fix a bad import in one click.",
+      "detail": "Bulk generation runs 25 at a time with a progress page, a list of failed records with their reason and Retry failed — never a duplicate certificate or a new serial. Every CSV import is logged: flag matching rows for review, or undo an import and get back the fields it changed. A Diagnostics page and WP-CLI commands (generate, import, jobs, diagnostics) cover the rest.",
+      "screenshot_ref": "bulk-jobs-progress.png"
+    },
+    {
+      "id": "roles",
+      "title": "School coordinators and a certificate register",
+      "pitch": "Let each school's staff issue their own certificates, and keep one register of everything issued.",
+      "detail": "The School Coordinator role sees and issues certificates for its own school only; templates, settings and revoke stay with admins. The certificate register lists every certificate with serial, verification code and status, and downloads as CSV or a printable PDF.",
+      "screenshot_ref": "certificate-register.png"
     },
     {
       "id": "badges",
@@ -101,10 +115,17 @@
     },
     {
       "id": "rest-api",
-      "title": "REST API for custom integrations (Pro)",
-      "pitch": "Issue certificates from any system that can make an HTTP call.",
-      "detail": "certificate-generator/v1 namespace: issue certificates, look up by email, validate an API key — plus a public no-auth serial verification endpoint in the free plugin.",
+      "title": "REST API and webhooks (Pro)",
+      "pitch": "Issue certificates from any system that can make an HTTP call — and hear back when things happen.",
+      "detail": "certificate-generator/v1 with scoped API keys: create and update students (find or upsert by your own external_id), generate, download and revoke certificates, and run bulk jobs. Signed webhooks for 16 events (issued, verified, revoked, bulk job finished, import failed…) with retries. The free plugin keeps a public serial verification endpoint.",
       "screenshot_ref": "rest-api-docs.png"
+    },
+    {
+      "id": "automation",
+      "title": "n8n, Zapier and WhatsApp automation (Pro)",
+      "pitch": "Certificates go out without anyone touching them.",
+      "detail": "The Automation page gives you five ready-made n8n workflow templates, a Zapier set-up guide and a one-click API key with the right scopes, plus job and webhook logs. Deliver certificates over WhatsApp as well as email.",
+      "screenshot_ref": "automation-page.png"
     },
     {
       "id": "custom-fonts",
@@ -133,7 +154,7 @@
     },
     {
       "title": "A genuinely free plugin, simple Pro pricing",
-      "detail": "The free plugin has no caps on certificates, emails, imports or templates, no license key and no account required. Pro is ₹249/month (₹2,499/year) for LMS and WooCommerce auto-issue, the REST API and custom fonts — not a quote-only enterprise wall."
+      "detail": "The free plugin has no caps on certificates, emails, imports or templates, no license key and no account required. Pro is ₹249/month (₹2,499/year) for LMS and WooCommerce auto-issue, the REST API, webhooks, n8n / Zapier automation and custom fonts — not a quote-only enterprise wall."
     }
   ],
   "comparison": {
@@ -180,9 +201,14 @@
         "Rare, often unsupported"
       ],
       [
-        "REST API",
-        "Pro",
+        "REST API and webhooks",
+        "Pro: scoped keys, bulk jobs, 16 signed webhook events",
         "Usually absent"
+      ],
+      [
+        "No-code automation",
+        "Pro: n8n templates, Zapier guide, WhatsApp delivery",
+        "Rare"
       ],
       [
         "Free plugin limits",
@@ -200,14 +226,14 @@
     {
       "name": "Free",
       "price": "$0",
-      "highlight": "The complete plugin, unlimited: certificates, emails, CSV imports and templates. Drag-and-drop designer, any-language names, QR verification, badges, revoke / reissue, bulk ZIP. No account or license key needed.",
+      "highlight": "The complete plugin, unlimited: certificates, emails, CSV imports and templates. Drag-and-drop designer, any-language names, QR verification, badges, revoke / reissue, background bulk jobs, import undo, School Coordinator role, bulk ZIP, WP-CLI. No account or license key needed.",
       "cta_label": "Download free",
       "cta_type": "register"
     },
     {
       "name": "Pro",
       "price": "₹249/mo",
-      "highlight": "Everything in Free plus auto-issue from Tutor LMS, LearnDash, LifterLMS, Sensei, LearnPress and WooCommerce, past-completion backfill, REST API, custom font upload, priority support — or ₹2,499/year",
+      "highlight": "Everything in Free plus auto-issue from Tutor LMS, LearnDash, LifterLMS, Sensei, LearnPress and WooCommerce, past-completion backfill, REST API with webhooks, n8n / Zapier automation, WhatsApp delivery, custom font upload, priority support — or ₹2,499/year",
       "cta_label": "Subscribe",
       "cta_type": "checkout",
       "highlighted": true
@@ -263,12 +289,27 @@
     },
     {
       "file": "search-shortcode-frontend.png",
-      "capture": "Front-end [student_search] shortcode on a live page",
+      "capture": "Front-end [certificate_generator_student_search] shortcode on a live page",
       "status": "missing"
     },
     {
       "file": "rest-api-docs.png",
       "capture": "REST API settings/key page, or a Postman call example",
+      "status": "missing"
+    },
+    {
+      "file": "bulk-jobs-progress.png",
+      "capture": "Certificate Generator → Bulk Jobs progress page with done / failed / pending",
+      "status": "missing"
+    },
+    {
+      "file": "certificate-register.png",
+      "capture": "Certificate Generator → Register with filters",
+      "status": "missing"
+    },
+    {
+      "file": "automation-page.png",
+      "capture": "Pro: Certificate Generator → Automation (n8n templates tab)",
       "status": "missing"
     },
     {

@@ -55,7 +55,7 @@ const requirements: { need: string; how: string; href: string; evidence: string 
   },
   {
     need: "Certificate search and verification",
-    how: "[student_search], [teacher_search] and [school_search] let recipients find their certificates by email; anyone can verify by QR, serial number or email.",
+    how: "[certificate_generator_student_search], [certificate_generator_teacher_search] and [certificate_generator_school_search] let recipients find their certificates by email; anyone can verify by QR, serial number or email.",
     href: "/docs/certificate-generator/shortcodes",
     evidence: "Shortcodes",
   },

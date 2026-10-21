@@ -25,7 +25,7 @@ const timeSaved = [
 const useCases = [
   {
     audience: "Course creators & schools",
-    detail: "Certificate Generator auto-issues certificates and badges the moment a course finishes — no manual PDF work, no chasing students for their design.",
+    detail: "Certificate Generator bulk-issues certificates and badges from a CSV for free — and with Pro, the moment a course finishes. No manual PDF work, no chasing students for their design.",
     href: "/plugins/certificate-generator",
   },
   {

@@ -23,7 +23,7 @@ type Cycle = "monthly" | "yearly";
 
 const faqs = [
   { q: "Is the free plugin really unlimited?", a: "Yes. The free Certificate Generator has no caps on certificates, emails, CSV imports or templates, needs no license key and never contacts our license server. You can download it without an account." },
-  { q: "What does Pro add?", a: "Pro is a small add-on plugin installed next to the free one. It auto-issues certificates from Tutor LMS, LearnDash, LifterLMS, Sensei LMS, LearnPress and WooCommerce (including past completions), and adds the REST API, custom .ttf font upload, the school bulk ZIP shortcode and priority support." },
+  { q: "What does Pro add?", a: "Pro is a small add-on plugin installed next to the free one. It auto-issues certificates from Tutor LMS, LearnDash, LifterLMS, Sensei LMS, LearnPress and WooCommerce (including past completions), and adds a REST API with scoped keys and bulk jobs, signed webhooks, n8n / Zapier templates on an Automation page, WhatsApp delivery, custom .ttf font upload, the school bulk ZIP shortcode and priority support." },
   { q: "Do I need the free plugin to use Pro?", a: "Yes. Install and activate Certificate Generator (free) first, then upload the Pro add-on from your dashboard's Downloads page and activate your license key under Settings → License." },
   { q: "How many sites can one license activate?", a: "Pro activates 1 site; Business activates up to 5. Deactivate a site from your dashboard to free up a slot. The free plugin works on any number of sites." },
   { q: "Can I cancel or change my plan anytime?", a: "Yes. Use Manage Billing on your dashboard to open the Lemon Squeezy customer portal and update or cancel your subscription. If Pro lapses, the free plugin keeps working with all your certificates." },
@@ -115,6 +115,7 @@ export default function PricingPage() {
               <li>Unlimited certificates, emails and CSV imports</li>
               <li>Drag-and-drop templates, any-language names, badges and e-signatures</li>
               <li>QR verification, revoke / reissue, bulk ZIP download</li>
+              <li>Background bulk jobs, import undo, School Coordinator role, WP-CLI</li>
             </ul>
             <a href="/register?download=certificate-generator">
               <Button className="mt-6 w-full bg-slate-100 text-slate-900 hover:bg-slate-200">{free.cta.label}</Button>
@@ -134,7 +135,8 @@ export default function PricingPage() {
             <p className="mt-4 text-sm text-slate-600">Everything in Free, plus:</p>
             <ul className="mt-2 space-y-1 text-sm text-slate-600">
               <li>Auto-issue from Tutor LMS, LearnDash, LifterLMS, Sensei, LearnPress and WooCommerce</li>
-              <li>REST API and custom font upload</li>
+              <li>REST API, signed webhooks, n8n / Zapier and WhatsApp</li>
+              <li>Custom font upload</li>
               <li>1 site · priority support</li>
             </ul>
             <Button onClick={subscribePro} disabled={loading} className="mt-6 w-full bg-indigo-600 hover:bg-indigo-700">

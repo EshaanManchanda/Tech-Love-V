@@ -58,7 +58,7 @@ const differences = [
   },
   {
     title: "Verification, events and analytics on the Free plan",
-    detail: "None of these are paid add-ons, and Free has no certificate, email or import limits; Pro is ₹249/month for LMS/WooCommerce auto-issue and the REST API.",
+    detail: "None of these are paid add-ons, and Free has no certificate, email or import limits; Pro is ₹249/month for LMS/WooCommerce auto-issue, the REST API, webhooks and n8n / Zapier automation.",
     href: "/certificate-generator/pricing",
   },
 ];

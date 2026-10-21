@@ -25,7 +25,7 @@ export const CG_DOCS: CgDoc[] = [
     slug: "getting-started",
     title: "Getting started with Certificate Generator",
     description: "A 5-step quick start for Certificate Generator: configure SMTP, create a template, add students, send a test email, and bulk send certificates.",
-    intro: "This 5-step checklist takes you from a fresh install to your first bulk send. The same checklist is available in wp-admin under Certificate Generator → Documentation → Getting Started.",
+    intro: "These 5 steps take you from a fresh install to your first bulk send. The plugin's own setup checklist (below) tracks the same ground on the Dashboard.",
     blocks: [
       {
         h2: "Quick start",
@@ -39,9 +39,15 @@ export const CG_DOCS: CgDoc[] = [
         ],
       },
       {
+        h2: "The setup checklist",
+        paragraphs: [
+          "Certificate Generator → Dashboard shows a 6-step checklist: publish the verification page (one click: the plugin creates it), create a template, email yourself a test certificate, add records, issue, and verify a certificate. Each step ticks itself off as you go.",
+        ],
+      },
+      {
         h2: "Automatic issuance from your LMS",
         paragraphs: [
-          "With the Pro add-on installed, certificates can be issued automatically on Tutor LMS, LearnDash, LifterLMS, Sensei LMS or LearnPress course completion, or WooCommerce order completion, instead of by bulk send.",
+          "With the Pro add-on installed, certificates can be issued automatically on Tutor LMS, LearnDash, LifterLMS, Sensei LMS or LearnPress course completion (or a passed Tutor LMS quiz), or WooCommerce order completion, instead of by bulk send.",
         ],
       },
     ],
@@ -102,6 +108,13 @@ export const CG_DOCS: CgDoc[] = [
         ],
       },
       {
+        h2: "QR code and serial number fields",
+        paragraphs: [
+          "Under Field Slots, set a slot's Type to QR code or Serial number. A QR code slot is a square (10–50 mm) you drag into place. A Serial number slot prints the serial with its own font, size, colour and alignment, after optional text such as \"Certificate No.\". {serial_number} also works inside any custom-text slot.",
+          "Templates made before 7.9.4 show their old QR and serial settings as slots the first time you open them, and switch over when you save.",
+        ],
+      },
+      {
         h2: "Custom fonts",
         paragraphs: ["With Pro you can upload a .ttf font (a script font for names, for example) and select it for any field."],
       },
@@ -139,8 +152,19 @@ export const CG_DOCS: CgDoc[] = [
         },
       },
       {
+        h2: "Rows that match an existing record",
+        paragraphs: ["Choose whether a matching row updates the record, is skipped, or is flagged for review. Flagged rows wait under Bulk Import → Import history, where you apply the file's values, add the row as a new record, or dismiss it."],
+      },
+      {
+        h2: "Undo an import",
+        paragraphs: [
+          "Every import is listed under Bulk Import → Import history. Undo import shows a preview first, then deletes the records the import created and restores the fields it changed.",
+          "Records that have since received a certificate or an email, or were edited, are kept and listed with the reason.",
+        ],
+      },
+      {
         h2: "Limits",
-        paragraphs: ["There are no import or export limits on any plan, including Free."],
+        paragraphs: ["There are no import or export limits on any plan, including Free. Large files can also be imported from the command line with wp certificate-generator import <file>."],
       },
       {
         h2: "Export",
@@ -185,8 +209,8 @@ export const CG_DOCS: CgDoc[] = [
   {
     slug: "verification",
     title: "Verifying certificates",
-    description: "Public certificate verification by QR code, serial number or email, the [cg_verify_certificate] shortcode, and the /verify/{serial} REST endpoint.",
-    intro: "Every certificate's QR code — and the [cg_verify_certificate] shortcode — resolves to a public authenticity check. Verification is not plan-gated.",
+    description: "Public certificate verification by QR code, serial number or email, the [certificate_generator_verify_certificate] shortcode, and the /verify/{serial} REST endpoint.",
+    intro: "Every certificate's QR code — and the [certificate_generator_verify_certificate] shortcode — resolves to a public authenticity check. Verification is not plan-gated.",
     blocks: [
       {
         h2: "Ways to verify",
@@ -198,7 +222,7 @@ export const CG_DOCS: CgDoc[] = [
       },
       {
         h2: "Add the verification form to a page",
-        code: "[cg_verify_certificate]",
+        code: "[certificate_generator_verify_certificate]",
         paragraphs: ["Revoked certificates are shown as revoked when verified."],
       },
     ],
@@ -322,7 +346,7 @@ export const CG_DOCS: CgDoc[] = [
   {
     slug: "shortcodes",
     title: "Shortcodes",
-    description: "Certificate Generator shortcodes: [student_search], [teacher_search], [school_search], [school_bulk_certificate_download] and [cg_verify_certificate].",
+    description: "Certificate Generator shortcodes: [certificate_generator_student_search], [certificate_generator_teacher_search], [certificate_generator_school_search], [school_bulk_certificate_download] and [certificate_generator_verify_certificate].",
     intro: "Drop any of these into a page or post with the block or classic editor, or call do_shortcode() in a template.",
     blocks: [
       {
@@ -330,18 +354,19 @@ export const CG_DOCS: CgDoc[] = [
         table: {
           head: ["Shortcode", "Purpose"],
           rows: [
-            ["[student_search]", "Search form for a student to look up their own certificates by email."],
-            ["[teacher_search]", "Same lookup flow for teachers."],
-            ["[school_search]", "Same lookup flow for schools, by school name and place."],
+            ["[certificate_generator_student_search]", "Search form for a student to look up their own certificates by email."],
+            ["[certificate_generator_teacher_search]", "Same lookup flow for teachers."],
+            ["[certificate_generator_school_search]", "Same lookup flow for schools, by school name and place."],
             ["[school_bulk_certificate_download]", "Lets a school download all its certificates as a ZIP."],
-            ["[cg_verify_certificate]", "Public certificate verification form."],
+            ["[certificate_generator_verify_certificate]", "Public certificate verification form."],
+            ["[certificate_generator_my_certificates]", "Recipients sign in with an emailed link to download and share all their certificates."],
           ],
         },
       },
       {
         h2: "Customising search-form text",
         paragraphs: ["The three search shortcodes accept optional attributes. For a sitewide default, use Settings → Shortcode Text. Order: shortcode attribute → sitewide setting → built-in default."],
-        code: '[student_search title="Custom Title" subtitle="Custom subtitle" button_text="Find Mine" help_text="Custom help text"]',
+        code: '[certificate_generator_student_search title="Custom Title" subtitle="Custom subtitle" button_text="Find Mine" help_text="Custom help text"]',
       },
     ],
     feature: "student-management",
@@ -349,21 +374,74 @@ export const CG_DOCS: CgDoc[] = [
   {
     slug: "rest-api",
     title: "REST API",
-    description: "Certificate Generator REST API (namespace certificate-generator/v1): issue certificates, validate keys, look up certificates by email, and verify serials.",
-    intro: "Namespace certificate-generator/v1. Endpoints need a bearer token unless noted. The REST API is part of the Pro add-on (Pro and Business). The public serial verification endpoint works in the free plugin.",
+    description: "Certificate Generator REST API (certificate-generator/v1): scoped API keys, students, certificates, bulk jobs and signed webhooks.",
+    intro: "Base URL https://your-site/wp-json/certificate-generator/v1. The REST API is part of the Pro add-on (Pro and Business, 1.8.0+ with the free plugin 7.9.3+). The public verification endpoint works in the free plugin.",
     blocks: [
+      {
+        h2: "Authentication",
+        paragraphs: [
+          "Create a key on Settings → API Settings and pick its scopes: students:read, students:write, certificates:read, certificates:create, certificates:revoke, webhooks:manage. The key is shown once; only a hash is stored. Send it as Authorization: Bearer cgk_….",
+          "Each key is limited to 120 requests a minute. Every response carries an X-Request-Id; quote it when reporting a problem.",
+        ],
+      },
       {
         h2: "Endpoints",
         table: {
-          head: ["Method", "Route", "Auth", "Notes"],
+          head: ["Method", "Route", "Scope", "Notes"],
           rows: [
-            ["POST", "/issue-certificate", "Bearer token", "Pro / Business. Generates and emails/zips certificates by student email."],
-            ["GET", "/health", "None", "Liveness check."],
-            ["POST", "/validate-key", "Bearer token", "Validates an API key."],
-            ["GET", "/certificates-by-email", "Bearer token", "Read-only lookup — does not regenerate certificates."],
-            ["GET", "/verify/{serial}", "None", "Public serial-number verification."],
+            ["GET", "/me", "any", "Connection test: site, plan, plugin versions and the key's scopes."],
+            ["GET", "/templates", "certificates:read", "Published templates, for dropdowns."],
+            ["GET / POST", "/students", "students:read / write", "Search by name, email or external_id. POST with match_by = external_id or email updates one match or creates the record."],
+            ["GET / PATCH", "/students/{id}", "students:read / write", "PATCH changes only the fields sent."],
+            ["GET / POST", "/certificates", "certificates:read / create", "POST student_id generates the certificate; an Idempotency-Key header makes retries safe."],
+            ["GET", "/certificates/{id}/download", "certificates:read", "The PDF."],
+            ["POST", "/certificates/{id}/revoke", "certificates:revoke", "With a reason; /reinstate undoes it."],
+            ["POST", "/jobs/certificate-generation", "certificates:create", "Bulk generation for up to 5,000 students; returns 202 and a job to poll."],
+            ["GET", "/jobs/{id}", "certificates:read", "Progress and failed items; POST /jobs/{id}/retry re-runs only the failed ones."],
+            ["GET / POST", "/webhooks", "webhooks:manage", "Subscribe a https URL to events; the secret is shown once."],
+            ["GET", "/verify/{code or serial}", "public", "From the free plugin, no key needed."],
           ],
         },
+      },
+      {
+        h2: "Routes from 1.x",
+        paragraphs: ["/issue-certificate, /certificates-by-email, /validate-key and /health still work, and keys made before 1.8.0 keep full access. Move your apps to a scoped key, then remove the old one."],
+      },
+      {
+        h2: "Webhooks",
+        paragraphs: [
+          "16 events, including certificate.issued, .revoked, .reissued, .expired and .verified, student.created / .updated / .deleted, import.completed / .failed, bulk_job.completed / .failed, email.sent / .failed and whatsapp.status.",
+          "Each delivery is signed: X-CG-Signature-256: t=<timestamp>,v1=<HMAC-SHA256 of t + \".\" + body>. Reject a timestamp older than 5 minutes and de-duplicate on the event id. Failed deliveries retry after 1, 5, 30 and 120 minutes.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "automation",
+    title: "Automation with n8n, Zapier and WhatsApp",
+    description: "Connect Certificate Generator Pro to n8n or Zapier with ready-made workflow templates, and deliver certificates over WhatsApp.",
+    intro: "The Pro add-on's Certificate Generator → Automation page has everything needed to issue certificates from other tools without code.",
+    blocks: [
+      {
+        h2: "n8n",
+        ordered: true,
+        list: [
+          "Open Certificate Generator → Automation and download one of the five n8n workflow templates.",
+          "Click Create key: the API key gets exactly the scopes that template needs.",
+          "Import the template in n8n, paste your site URL and the key, and activate it.",
+        ],
+      },
+      {
+        h2: "Zapier",
+        paragraphs: ["Zapier connects through Webhooks by Zapier and the REST API. The Automation page walks through the set-up step by step."],
+      },
+      {
+        h2: "WhatsApp",
+        paragraphs: ["Pro can send each certificate over WhatsApp as well as email, using your own WhatsApp provider account. Delivery status shows in the message log and can be sent on as a webhook."],
+      },
+      {
+        h2: "Logs",
+        paragraphs: ["The Automation page lists recent bulk jobs and webhook deliveries, with a retry button for failed deliveries."],
       },
     ],
   },
@@ -373,6 +451,14 @@ export const CG_DOCS: CgDoc[] = [
     description: "Fix common Certificate Generator issues: emails not received, \"queued 0 certificates\", PDFs not generating, ZIPs not attaching.",
     intro: "Most problems come down to SMTP configuration, missing template positions, or data that hasn't been migrated yet.",
     blocks: [
+      {
+        h2: "Start with Diagnostics",
+        paragraphs: ["Tools → Cert Gen Diagnostics checks folders, fonts, the PDF and image libraries, the database version, overdue scheduled tasks, the email queue and stalled bulk jobs, and shows the fix for each problem. From the command line: wp certificate-generator diagnostics."],
+      },
+      {
+        h2: "A bulk job isn't moving",
+        paragraphs: ["Bulk jobs run on WP-Cron. On a low-traffic site, run it from a real cron job (wp cron event run --due-now every 5 minutes). A job no worker touched for 15 minutes shows as stalled; keeping its progress page open also moves it along. Retry failed re-runs only the failed records."],
+      },
       {
         h2: "Emails not being received",
         ordered: true,
